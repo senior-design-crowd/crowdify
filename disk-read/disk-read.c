@@ -31,28 +31,32 @@ main(int argc, char *argv[])
 	info = bson_new();
 	BSON_APPEND_UTF8(info, "block", "/dev/sda");
 
-	bson_t child;
-	BSON_APPEND_ARRAY_BEGIN(info, "blocks", &child);
+	bson_t *child;
+	child = bson_new();
+	BSON_APPEND_ARRAY_BEGIN(info, "blocks", child);
 
 	char key[100];
 	unsigned char buf[4096];
 	int i;
-	for(i = 0; (read(fd, buf, sizeof(buf)) <= 0) && (i < 100000); i++) {
+	for(i = 0; (read(fd, buf, sizeof(buf)) > 0) && (i < 10000); i++) {
 		int hash_len;
 		hash_len = gcry_md_get_algo_dlen(GCRY_MD_SHA256);
 		unsigned char hash[hash_len];
+
+		memset(hash, 0, sizeof(hash));
 
 		gcry_md_hash_buffer(GCRY_MD_SHA256, hash, buf, sizeof(buf));
 
 		bson_t *query;
 		query = bson_new();
 
-		snprintf(key, sizeof(key), "%i", i);
-		BSON_APPEND_BINARY(query, "hash",0, hash, sizeof(hash));
-		BSON_APPEND_BINARY(&child, key, 0, hash, sizeof(hash));
+		BSON_APPEND_BINARY(query, "hash", 0, hash, sizeof(hash));
 
 		mongoc_cursor_t *cursor;
 		cursor = mongoc_collection_find(data_collection, MONGOC_QUERY_NONE, 0, 0, 0, query, NULL, NULL);
+
+		snprintf(key, sizeof(key), "%i", i);
+		BSON_APPEND_BINARY(child, key, 0, hash, sizeof(hash));
 
 		const bson_t *result;
 		if (mongoc_cursor_next(cursor, &result)) {
@@ -63,16 +67,16 @@ main(int argc, char *argv[])
 		bson_t *doc;
 		doc = bson_new();
 
-		bson_oid_t oid;
-		bson_oid_init(&oid, NULL);
-		BSON_APPEND_OID(doc, "_id", &oid);
-		BSON_APPEND_BINARY(doc, "hash",0, hash, sizeof(hash));
+		BSON_APPEND_BINARY(doc, "hash", 0, hash, sizeof(hash));
 		BSON_APPEND_BINARY(doc, "data", 0, buf, sizeof(buf));
 
-
 		bson_error_t error;
-		if (!mongoc_collection_insert(data_collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
+		if (mongoc_collection_insert(data_collection, MONGOC_INSERT_NONE, doc, NULL, &error) == false) {
 			printf("%s\n", error.message);
+			puts("failed");
+			goto FOUND;
+		} else {
+			puts("dinsert");
 		}
 
 		bson_destroy(doc);
@@ -82,14 +86,17 @@ FOUND:
 		memset(hash, 0, sizeof(hash));
 	}
 
-	bson_append_array_end(info, &child);
+	bson_append_array_end(info, child);
 
 	bson_error_t error;
 	if (!mongoc_collection_insert(meta_collection, MONGOC_INSERT_NONE, info, NULL, &error)) {
 		printf("%s\n", error.message);
+	} else {
+		puts("iinsert");
 	}
 
 	close(fd);
+	puts("closed");
 
 	mongoc_collection_destroy(data_collection);
 	mongoc_collection_destroy(meta_collection);

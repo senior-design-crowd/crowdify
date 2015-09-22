@@ -10,3 +10,7 @@ Sources:
 https://en.wikipedia.org/wiki/Master_boot_record
 
 The RPi is found using an ARP. It'll have a constant MAC.
+
+It may be that it's better to store a sectors unit of data, whatever that means for the hard drive in question. This allows for greater flexibility with tools down the road. We can simply add a field to each record and a condition to the existance test.
+
+It occurs to me that once this data is available in sector size units, there's nothing stoping us from making a variety of clients that do various things relating to hot topics like digital forensics. We can also make a backup tool that has the characteristics of rsync, bacula, and dd. This creates a nice way for us to test out a bunch of crazy features, without too much effort.

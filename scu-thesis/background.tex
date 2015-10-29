@@ -1,4 +1,4 @@
 \section{Background}
 Our project was benefited by a large amount of related products and research. The following helped us to better understand our requirements and objectives as well as warning us of possible pitfalls.
 \subsection{Pastiche}
-Pastiche uses a dual-layer approch, first building a distributed file system based on blocks, then adding a backup system on top. 
+Pastiche uses a dual-layer approch, first building a distributed file system based on blocks, then adding a backup system on top. The distributed file system includes a node discovery mechanism, encryption and de-duplicaiton. All backup data is entered into the block store and distributed to some percentage of nodes. The system takes care of corrupted blocks and node failure. Backup information is also distiubuted among the nodes.

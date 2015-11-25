@@ -1,0 +1,33 @@
+This is BibTeX, Version 0.99dThe top-level auxiliary file: master.aux
+A level-1 auxiliary file: abstract.aux
+A level-1 auxiliary file: introduction.aux
+The style file: ieee.bst
+Database file #1: master.bib
+Warning--entry type for "imagineiti" isn't style-file defined
+--line 1 of file master.bib
+Warning--entry type for "pepperdine" isn't style-file defined
+--line 6 of file master.bib
+Warning--entry type for "gigaom" isn't style-file defined
+--line 10 of file master.bib
+Warning--entry type for "rightscale" isn't style-file defined
+--line 14 of file master.bib
+Warning--entry type for "password" isn't style-file defined
+--line 18 of file master.bib
+Warning--entry type for "theguardian" isn't style-file defined
+--line 22 of file master.bib
+Warning--entry type for "backblaze" isn't style-file defined
+--line 26 of file master.bib
+Warning--to sort, need author or key in imagineiti
+Warning--to sort, need author or key in pepperdine
+Warning--to sort, need author or key in gigaom
+Warning--to sort, need author or key in rightscale
+Warning--to sort, need author or key in password
+Warning--to sort, need author or key in theguardian
+Warning--to sort, need author or key in backblaze
+Warning--all relevant fields are empty in pepperdine
+Warning--all relevant fields are empty in gigaom
+Warning--all relevant fields are empty in rightscale
+Warning--all relevant fields are empty in password
+Warning--all relevant fields are empty in theguardian
+Warning--all relevant fields are empty in backblaze
+(There were 20 warnings)

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  24 NOV 2015 21:49
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  29 NOV 2015 02:21
 entering extended mode
 **C:/Users/Eric/OneDrive/Documents/Senior*Design/crowdify/scu-thesis/master.tex
 
@@ -55,7 +55,9 @@ Package: setspace 2011/12/19 v6.7a set line spacing
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
 ux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\introducti
-on.aux"))
+on.aux")
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
+ncerns.aux"))
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
 LaTeX Font Info:    ... okay on input line 26.
 LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 26.
@@ -104,6 +106,27 @@ Missing character: There is no ™ in font cmr10!
 
 
 ]) [2]
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
+ncerns.tex"
+Chapter 2.
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no ™ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no ™ in font cmr10!
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no ™ in font cmr10!
+[3
+
+
+
+]
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no ™ in font cmr10!
+) [4]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.bbl
 "
 Underfull \hbox (badness 10000) in paragraph at lines 13--14
@@ -117,8 +140,17 @@ Underfull \hbox (badness 10000) in paragraph at lines 19--20
 rity-hack-icloud-backup-
  []
 
-) [3
 
+Underfull \hbox (badness 10000) in paragraph at lines 34--35
+[]\OT1/cmr/m/n/10 http://www.independent.ie/business/technology/news/stars-nude
+-photo-attack-may-have-
+ []
+
+) [5
+
+
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}\par \vfil \penalty -
+\@M \write \m@ne {}\vbox {}\penalty -\@Mi }{5}}
 
 ]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.aux
@@ -126,21 +158,23 @@ rity-hack-icloud-backup-
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
 ux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\introducti
-on.aux")) ) 
+on.aux")
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
+ncerns.aux")) ) 
 Here is how much of TeX's memory you used:
- 351 strings out of 493921
- 5801 string characters out of 3147285
- 54517 words of memory out of 3000000
- 3696 multiletter control sequences out of 15000+200000
- 5765 words of font info for 21 fonts, out of 3000000 for 9000
+ 366 strings out of 493921
+ 6432 string characters out of 3147285
+ 54862 words of memory out of 3000000
+ 3704 multiletter control sequences out of 15000+200000
+ 6370 words of font info for 23 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 29i,6n,19p,2042b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
-<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx10.p
-fb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/P
-rogram Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on master.pdf (8 pages, 66241 bytes).
+ 29i,6n,20p,2042b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
+<C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx
+10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
+C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+Output written on master.pdf (10 pages, 73625 bytes).
 PDF statistics:
- 41 PDF objects out of 1000 (max. 8388607)
+ 47 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

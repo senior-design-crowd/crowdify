@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  1 DEC 2015 01:19
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  1 DEC 2015 11:29
 entering extended mode
 **C:/Users/Eric/OneDrive/Documents/Senior*Design/crowdify/scu-thesis/master.tex
 
@@ -220,23 +220,30 @@ Missing character: There is no ™ in font cmr10!
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\activitydi
 agram.tex"
 Chapter 2.
-<images/ActivityDiagram1.jpg, id=27, 1026.83624pt x 773.89125pt>
-File: images/ActivityDiagram1.jpg Graphic file (type jpg)
-
-<use images/ActivityDiagram1.jpg>
-Package pdftex.def Info: images/ActivityDiagram1.jpg used on input line 3.
-(pdftex.def)             Requested size: 462.07204pt x 348.24785pt.
-)
-Overfull \hbox (28.45203pt too wide) in paragraph at lines 3--51
-[] 
- []
+<images/mockup.png, id=27, 722.7pt x 694.09312pt>
+File: images/mockup.png Graphic file (type png)
+ <use images/mockup.png>
+Package pdftex.def Info: images/mockup.png used on input line 7.
+(pdftex.def)             Requested size: 325.21199pt x 312.33902pt.
 
 [3
 
 
 
- <C:/Users/Eric/OneDrive/Documents/Senior Design/crowdify/scu-thesis/images/Act
-ivityDiagram1.jpg>]
+ <C:/Users/Eric/OneDrive/Documents/Senior Design/crowdify/scu-thesis/images/moc
+kup.png>] <images/ActivityDiagram1.jpg, id=33, 1026.83624pt x 773.89125pt>
+File: images/ActivityDiagram1.jpg Graphic file (type jpg)
+
+<use images/ActivityDiagram1.jpg>
+Package pdftex.def Info: images/ActivityDiagram1.jpg used on input line 17.
+(pdftex.def)             Requested size: 462.07204pt x 348.24785pt.
+
+Overfull \hbox (28.45203pt too wide) in paragraph at lines 17--18
+ [][] 
+ []
+
+) [4 <C:/Users/Eric/OneDrive/Documents/Senior Design/crowdify/scu-thesis/images
+/ActivityDiagram1.jpg>]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.tex"
 Chapter 3.
@@ -249,7 +256,7 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
-[4
+[5
 
 
 
@@ -257,12 +264,50 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
- [5]) [6] [7]
+ [6]) [7] [8]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.bbl
-") [8
+"
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no ” in font cmr10!
+
+Underfull \hbox (badness 10000) in paragraph at lines 10--11
+[]\OT1/cmr/m/n/10 Imgur, 'The time you spend alone with your-self.', 2015. [On-
+line]. Avail-able:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 16--17
+\OT1/cmr/m/n/10 2014. [On-line]. Avail-able: http://www.theguardian.com/technol
+ogy/2014/sep/01/naked-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--29
+[]\OT1/cmr/m/n/10 M. Landi, 'Stars' nude photo at-tack may have been down to pa
+ss-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--29
+\OT1/cmr/m/n/10 word codes - In-de-pen-dent.ie', In-de-pen-dent.ie, 2014. [On-l
+ine]. Avail-able:
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 28--29
+\OT1/cmr/m/n/10 http://www.independent.ie/business/technology/news/stars-nude-p
+hoto-attack-may-have-
+ []
+
+[9
 
 
 ]
+Missing character: There is no â in font cmr10!
+Missing character: There is no € in font cmr10!
+Missing character: There is no ” in font cmr10!
+) [10]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.aux
 "
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
@@ -274,19 +319,19 @@ agram.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux")) ) 
 Here is how much of TeX's memory you used:
- 1770 strings out of 493921
- 26598 string characters out of 3147285
- 85354 words of memory out of 3000000
- 5051 multiletter control sequences out of 15000+200000
+ 1781 strings out of 493921
+ 26762 string characters out of 3147285
+ 85386 words of memory out of 3000000
+ 5060 multiletter control sequences out of 15000+200000
  6370 words of font info for 23 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 29i,6n,32p,2042b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 29i,6n,32p,2042b,218s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx
 10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
 C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on master.pdf (13 pages, 131516 bytes).
+Output written on master.pdf (15 pages, 174338 bytes).
 PDF statistics:
- 58 PDF objects out of 1000 (max. 8388607)
+ 67 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

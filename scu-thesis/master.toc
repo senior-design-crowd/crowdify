@@ -1,13 +1,14 @@
 \contentsline {chapter}{\numberline {1}Introduction}{1}
 \contentsline {section}{\numberline {1.1}Motivation}{1}
 \contentsline {section}{\numberline {1.2}Solution}{2}
-\contentsline {chapter}{\numberline {2}Societal Issues}{3}
-\contentsline {section}{\numberline {2.1}Ethical Discussion, Social Concerns, and Compassion}{3}
-\contentsline {subsection}{\numberline {2.1.1}Justification}{3}
-\contentsline {subsection}{\numberline {2.1.2}Lifelong Learning}{4}
-\contentsline {subsection}{\numberline {2.1.3}Possible Pitfalls}{4}
-\contentsline {section}{\numberline {2.2}Political Concerns}{5}
-\contentsline {section}{\numberline {2.3}Economic considerations and Manufacturability}{5}
-\contentsline {section}{\numberline {2.4}Health and Safety}{5}
-\contentsline {section}{\numberline {2.5}Sustainability and Environmental Impact}{5}
-\contentsline {section}{\numberline {2.6}Usability}{5}
+\contentsline {chapter}{\numberline {2}Activity Diagram}{3}
+\contentsline {chapter}{\numberline {3}Societal Issues}{4}
+\contentsline {section}{\numberline {3.1}Ethical Discussion, Social Concerns, and Compassion}{4}
+\contentsline {subsection}{\numberline {3.1.1}Justification}{4}
+\contentsline {subsection}{\numberline {3.1.2}Lifelong Learning}{5}
+\contentsline {subsection}{\numberline {3.1.3}Possible Pitfalls}{5}
+\contentsline {section}{\numberline {3.2}Political Concerns}{6}
+\contentsline {section}{\numberline {3.3}Economic considerations and Manufacturability}{6}
+\contentsline {section}{\numberline {3.4}Health and Safety}{6}
+\contentsline {section}{\numberline {3.5}Sustainability and Environmental Impact}{6}
+\contentsline {section}{\numberline {3.6}Usability}{6}

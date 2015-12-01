@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  30 NOV 2015 16:05
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  1 DEC 2015 01:19
 entering extended mode
 **C:/Users/Eric/OneDrive/Documents/Senior*Design/crowdify/scu-thesis/master.tex
 
@@ -82,26 +82,56 @@ Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
 \Gm@dimlist=\toks15
 
 ("C:\Program Files\MiKTeX 2.9\tex\latex\geometry\geometry.cfg"))
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphicx.sty"
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphics.sty"
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\trig.sty"
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+("C:\Program Files\MiKTeX 2.9\tex\latex\00miktex\graphics.cfg"
+File: graphics.cfg 2007/01/18 v1.5 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: pdftex.def on input line 91.
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\pdftex-def\pdftex.def"
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\infwarerr.sty"
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\ltxcmds.sty"
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count95
+))
+\Gin@req@height=\dimen111
+\Gin@req@width=\dimen112
+)
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.aux
 "
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
 ux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\introducti
 on.aux")
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\activitydi
+agram.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux"))
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 33.
-LaTeX Font Info:    ... okay on input line 33.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 33.
-LaTeX Font Info:    ... okay on input line 33.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 33.
-LaTeX Font Info:    ... okay on input line 33.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 33.
-LaTeX Font Info:    ... okay on input line 33.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 33.
-LaTeX Font Info:    ... okay on input line 33.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 33.
-LaTeX Font Info:    ... okay on input line 33.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 36.
+LaTeX Font Info:    ... okay on input line 36.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -137,11 +167,25 @@ LaTeX Font Info:    ... okay on input line 33.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
+("C:\Program Files\MiKTeX 2.9\tex\context\base\supp-pdf.mkii"
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count96
+\scratchdimen=\dimen113
+\scratchbox=\box26
+\nofMPsegments=\count97
+\nofMParguments=\count98
+\everyMPshowfont=\toks16
+\MPscratchCnt=\count99
+\MPscratchDim=\dimen114
+\MPnumerator=\count100
+\makeMPintoPDFobject=\count101
+\everyMPtoPDFconversion=\toks17
+)
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 34.
+(Font)              <7> on input line 37.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 34.
-[1
+(Font)              <5> on input line 37.
+ [1
 
 
 {C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map}] [2]
@@ -173,9 +217,29 @@ Missing character: There is no ™ in font cmr10!
 
 
 ]) [2]
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\activitydi
+agram.tex"
+Chapter 2.
+<images/ActivityDiagram1.jpg, id=27, 1026.83624pt x 773.89125pt>
+File: images/ActivityDiagram1.jpg Graphic file (type jpg)
+
+<use images/ActivityDiagram1.jpg>
+Package pdftex.def Info: images/ActivityDiagram1.jpg used on input line 3.
+(pdftex.def)             Requested size: 462.07204pt x 348.24785pt.
+)
+Overfull \hbox (28.45203pt too wide) in paragraph at lines 3--51
+[] 
+ []
+
+[3
+
+
+
+ <C:/Users/Eric/OneDrive/Documents/Senior Design/crowdify/scu-thesis/images/Act
+ivityDiagram1.jpg>]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.tex"
-Chapter 2.
+Chapter 3.
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
@@ -185,7 +249,7 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
-[3
+[4
 
 
 
@@ -193,9 +257,9 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
- [4]) [5] [6]
+ [5]) [6] [7]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.bbl
-") [7
+") [8
 
 
 ]
@@ -205,22 +269,24 @@ Missing character: There is no ™ in font cmr10!
 ux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\introducti
 on.aux")
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\activitydi
+agram.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux")) ) 
 Here is how much of TeX's memory you used:
- 890 strings out of 493921
- 14248 string characters out of 3147285
- 70581 words of memory out of 3000000
- 4207 multiletter control sequences out of 15000+200000
+ 1770 strings out of 493921
+ 26598 string characters out of 3147285
+ 85354 words of memory out of 3000000
+ 5051 multiletter control sequences out of 15000+200000
  6370 words of font info for 23 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
  29i,6n,32p,2042b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx
 10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
 C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on master.pdf (12 pages, 77031 bytes).
+Output written on master.pdf (13 pages, 131516 bytes).
 PDF statistics:
- 53 PDF objects out of 1000 (max. 8388607)
+ 58 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
- 1 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 6 words of extra memory for PDF output out of 10000 (max. 10000000)
 

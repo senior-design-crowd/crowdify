@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  29 NOV 2015 17:47
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  30 NOV 2015 16:05
 entering extended mode
 **C:/Users/Eric/OneDrive/Documents/Senior*Design/crowdify/scu-thesis/master.tex
 
@@ -50,6 +50,38 @@ Package: setspace 2011/12/19 v6.7a set line spacing
 \c@@departmentcount=\count90
 \c@@itemcount=\count91
 )
+("C:\Program Files\MiKTeX 2.9\tex\latex\geometry\geometry.sty"
+Package: geometry 2010/09/12 v5.6 Page Geometry
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\keyval.sty"
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\ifpdf.sty"
+Package: ifpdf 2011/01/30 v2.3 Provides the ifpdf switch (HO)
+Package ifpdf Info: pdfTeX in PDF mode is detected.
+)
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\ifvtex.sty"
+Package: ifvtex 2010/03/01 v1.5 Detect VTeX and its facilities (HO)
+Package ifvtex Info: VTeX not detected.
+)
+("C:\Program Files\MiKTeX 2.9\tex\generic\ifxetex\ifxetex.sty"
+Package: ifxetex 2010/09/12 v0.6 Provides ifxetex conditional
+)
+\Gm@cnth=\count92
+\Gm@cntv=\count93
+\c@Gm@tempcnt=\count94
+\Gm@bindingoffset=\dimen103
+\Gm@wd@mp=\dimen104
+\Gm@odd@mp=\dimen105
+\Gm@even@mp=\dimen106
+\Gm@layoutwidth=\dimen107
+\Gm@layoutheight=\dimen108
+\Gm@layouthoffset=\dimen109
+\Gm@layoutvoffset=\dimen110
+\Gm@dimlist=\toks15
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\geometry\geometry.cfg"))
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.aux
 "
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
@@ -58,23 +90,58 @@ ux")
 on.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux"))
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 26.
-LaTeX Font Info:    ... okay on input line 26.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 33.
+LaTeX Font Info:    ... okay on input line 33.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 33.
+LaTeX Font Info:    ... okay on input line 33.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 33.
+LaTeX Font Info:    ... okay on input line 33.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 33.
+LaTeX Font Info:    ... okay on input line 33.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 33.
+LaTeX Font Info:    ... okay on input line 33.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 33.
+LaTeX Font Info:    ... okay on input line 33.
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: letterpaper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(90.3375pt, 433.62001pt, 90.3375pt)
+* v-part:(T,H,B)=(72.26999pt, 650.43001pt, 72.26999pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=433.62001pt
+* \textheight=650.43001pt
+* \oddsidemargin=18.0675pt
+* \evensidemargin=18.0675pt
+* \topmargin=-37.0pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=79.3375pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <7> on input line 27.
+(Font)              <7> on input line 34.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <5> on input line 27.
- [1
+(Font)              <5> on input line 34.
+[1
 
 
 {C:/ProgramData/MiKTeX/2.9/pdftex/config/pdftex.map}] [2]
@@ -126,50 +193,12 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
- [4]) [5]
+ [4]) [5] [6]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.bbl
-"
-Missing character: There is no â in font cmr10!
-Missing character: There is no € in font cmr10!
-Missing character: There is no ” in font cmr10!
-
-Underfull \hbox (badness 10000) in paragraph at lines 10--11
-[]\OT1/cmr/m/n/10 Imgur, 'The time you spend alone with your-self.', 2015. [On-
-line]. Avail-able:
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 16--17
-\OT1/cmr/m/n/10 2014. [On-line]. Avail-able: http://www.theguardian.com/technol
-ogy/2014/sep/01/naked-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 25--26
-[]\OT1/cmr/m/n/10 M. Landi, 'Stars' nude photo at-tack may have been down to pa
-ss-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 25--26
-\OT1/cmr/m/n/10 word codes - In-de-pen-dent.ie', In-de-pen-dent.ie, 2014. [On-l
-ine]. Avail-able:
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 25--26
-\OT1/cmr/m/n/10 http://www.independent.ie/business/technology/news/stars-nude-p
-hoto-attack-may-have-
- []
-
-[6
+") [7
 
 
 ]
-Missing character: There is no â in font cmr10!
-Missing character: There is no € in font cmr10!
-Missing character: There is no ” in font cmr10!
-) [7]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.aux
 "
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
@@ -179,17 +208,17 @@ on.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux")) ) 
 Here is how much of TeX's memory you used:
- 366 strings out of 493921
- 6432 string characters out of 3147285
- 54862 words of memory out of 3000000
- 3704 multiletter control sequences out of 15000+200000
+ 890 strings out of 493921
+ 14248 string characters out of 3147285
+ 70581 words of memory out of 3000000
+ 4207 multiletter control sequences out of 15000+200000
  6370 words of font info for 23 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
- 29i,6n,20p,2042b,203s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 29i,6n,32p,2042b,198s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx
 10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
 C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on master.pdf (12 pages, 79233 bytes).
+Output written on master.pdf (12 pages, 77031 bytes).
 PDF statistics:
  53 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)

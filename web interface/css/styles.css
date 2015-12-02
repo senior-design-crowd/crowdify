@@ -1,0 +1,16 @@
+.tableholder{
+	height: 250px;
+	overflow: auto;
+	margin: 10px;
+}
+
+.folderbuttonrow{
+	margin: 10px;
+}
+
+.col-sm-4{
+}
+
+input.time{
+	width: 80px;
+}

@@ -1,0 +1,15 @@
+\contentsline {chapter}{\numberline {1}Introduction}{1}
+\contentsline {section}{\numberline {1.1}Motivation}{1}
+\contentsline {section}{\numberline {1.2}Solution}{2}
+\contentsline {chapter}{\numberline {2}User Interface}{3}
+\contentsline {chapter}{\numberline {3}Testing Plan}{5}
+\contentsline {chapter}{\numberline {4}Societal Issues}{7}
+\contentsline {section}{\numberline {4.1}Ethical Discussion, Social Concerns, and Compassion}{7}
+\contentsline {subsection}{\numberline {4.1.1}Justification}{7}
+\contentsline {subsection}{\numberline {4.1.2}Lifelong Learning}{8}
+\contentsline {subsection}{\numberline {4.1.3}Possible Pitfalls}{8}
+\contentsline {section}{\numberline {4.2}Political Concerns}{9}
+\contentsline {section}{\numberline {4.3}Economic considerations and Manufacturability}{9}
+\contentsline {section}{\numberline {4.4}Health and Safety}{9}
+\contentsline {section}{\numberline {4.5}Sustainability and Environmental Impact}{9}
+\contentsline {section}{\numberline {4.6}Usability}{9}

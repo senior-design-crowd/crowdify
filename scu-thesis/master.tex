@@ -4,9 +4,18 @@
 % \usepackage{txfonts}	% for using the Times-Roman font
 % \usepackage{natbib}	% for better citation styles
 
+\usepackage[letterpaper, portrait, margin=1in]
+{geometry}
 
-% These must be set first ... the rest of the thesis commands rely on them.
+\geometry{	
+lmargin = 1.25in,
+rmargin = 1.25in,
+}
 
+\usepackage{graphicx}
+\graphicspath{ {images/}}
+
+<<<<<<< HEAD
 \author{Eric Beckmann}
 \author{Jonathan Coon}
 \author{Mikael Figeroa}
@@ -14,7 +23,18 @@
 \title{A Distributed Backup System}
 \department{Department of Computer Science and Engineering}
 \degree{Bachelor of Computer Science and Engineering}
+=======
+>>>>>>> 7ba67753db996175ba44206df755c0e76fe5a16e
 
+% These must be set first ... the rest of the thesis commands rely on them.
+
+\author{Eric Beckmann}
+\author{Jonathan Coon}
+\author{Mikael Figueroa}
+\author{Matthew Voss}
+\title{Crowdify}
+\department{Department of Computer Science and Engineering}
+\degree{Bachelor of Science in Computer Science and Engineering}
 
 % Only bachelor's theses should have multiple authors and/or be from
 % multiple departments.  Signatures required:
@@ -36,7 +56,16 @@
 
 \mainmatter
 \include{introduction}
+<<<<<<< HEAD
 \include{usecases}
+=======
+\include{activitydiagram}
+\include{testingplan}
+\include{societalconcerns}
+
+\bibliography{master}
+\bibliographystyle{ieee}
+>>>>>>> 7ba67753db996175ba44206df755c0e76fe5a16e
 
 \backmatter
 \end{document}

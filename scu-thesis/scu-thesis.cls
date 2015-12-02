@@ -39,16 +39,17 @@
 \setlength{\@marginbottom}{1.0in}
 
 \newlength{\@marginleft}
-\setlength{\@marginleft}{1.0in}
+\setlength{\@marginleft}{1.25in}
 
 \newlength{\@marginright}
-\setlength{\@marginright}{1.0in}
+\setlength{\@marginright}{1.25in}
 
 \newlength{\@bindingoffset}
-\setlength{\@bindingoffset}{0.5in}
+\setlength{\@bindingoffset}{0in}
 
 
-% \textwidth = \paperwidth - \@marginleft - \@marginright - \@bindingoffset
+%\textwidth = \paperwidth - \@marginleft - \@marginright - \@bindingoffset
+%\textwidth = \paperwidth - \@marginleft - \@marginright
 
 \setlength{\textwidth}{\paperwidth}
 \addtolength{\textwidth}{-\@marginleft}

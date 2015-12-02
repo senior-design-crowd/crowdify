@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  1 DEC 2015 11:29
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2014.6.22)  1 DEC 2015 17:39
 entering extended mode
 **C:/Users/Eric/OneDrive/Documents/Senior*Design/crowdify/scu-thesis/master.tex
 
@@ -118,6 +118,8 @@ ux")
 on.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\activitydi
 agram.aux")
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\testingpla
+n.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux"))
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 36.
@@ -244,9 +246,17 @@ Overfull \hbox (28.45203pt too wide) in paragraph at lines 17--18
 
 ) [4 <C:/Users/Eric/OneDrive/Documents/Senior Design/crowdify/scu-thesis/images
 /ActivityDiagram1.jpg>]
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\testingpla
+n.tex"
+Chapter 3.
+) [5
+
+
+
+] [6]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.tex"
-Chapter 3.
+Chapter 4.
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
@@ -256,7 +266,7 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
-[5
+[7
 
 
 
@@ -264,7 +274,7 @@ Missing character: There is no ™ in font cmr10!
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ™ in font cmr10!
- [6]) [7] [8]
+ [8]) [9] [10]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.bbl
 "
 Missing character: There is no â in font cmr10!
@@ -300,14 +310,14 @@ Underfull \hbox (badness 10000) in paragraph at lines 28--29
 hoto-attack-may-have-
  []
 
-[9
+[11
 
 
 ]
 Missing character: There is no â in font cmr10!
 Missing character: There is no € in font cmr10!
 Missing character: There is no ” in font cmr10!
-) [10]
+) [12]
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\master.aux
 "
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\abstract.a
@@ -316,22 +326,24 @@ ux")
 on.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\activitydi
 agram.aux")
+("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\testingpla
+n.aux")
 ("C:\Users\Eric\OneDrive\Documents\Senior Design\crowdify\scu-thesis\societalco
 ncerns.aux")) ) 
 Here is how much of TeX's memory you used:
- 1781 strings out of 493921
- 26762 string characters out of 3147285
- 85386 words of memory out of 3000000
- 5060 multiletter control sequences out of 15000+200000
+ 1789 strings out of 493921
+ 27279 string characters out of 3147285
+ 85714 words of memory out of 3000000
+ 5061 multiletter control sequences out of 15000+200000
  6370 words of font info for 23 fonts, out of 3000000 for 9000
  841 hyphenation exceptions out of 8191
  29i,6n,32p,2042b,218s stack positions out of 5000i,500n,10000p,200000b,50000s
 <C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx
 10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
 C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
-Output written on master.pdf (15 pages, 174338 bytes).
+Output written on master.pdf (17 pages, 178008 bytes).
 PDF statistics:
- 67 PDF objects out of 1000 (max. 8388607)
+ 73 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

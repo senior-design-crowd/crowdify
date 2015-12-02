@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 2.6)
+project(disk-read)
+include_directories("/usr/local/include/libbson-1.0" "/usr/local/include/libmongoc-1.0")
+add_executable(disk-read disk-read.c)
+add_executable(disk-restore disk-restore.c)
+target_link_libraries(disk-read bson-1.0 mongoc-1.0 gcrypt)
+target_link_libraries(disk-restore bson-1.0 mongoc-1.0 gcrypt)

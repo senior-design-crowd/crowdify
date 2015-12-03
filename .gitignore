@@ -6,3 +6,5 @@
 *.toc
 *.log
 *.un~
+*.fls
+*.fdb_latexmk

@@ -1,0 +1,25 @@
+\chapter{Risk Analysis}
+
+\hspace*{-2cm}
+\begin{tabular}{p{5cm} | p{3cm} | l | l | l | p{4cm}}
+
+\hline
+
+Risk & Consequences & Probability & Severity & Impact & Mitigation Strategy \\
+
+\hline
+
+Insufficient testing.  Our project is a massively distributed system theoretically containing thousands of users.  Fully testing in this context will require massive automation and virtualization, and we may not be able to set up that infrastructure. & Our system will not be fully tested and may have many bugs. & 0.7 & 5 & 3.5 & We will come up with smaller scale tests that will simulate a larger environment. \\
+
+\hline
+
+Our team may not be able to develop an optimal data distribution algorithm in time.  This is the most innovative and research intensive part of the project, and we may not be able to complete it. & Our system, while working, will not be optimal or innovative. & 0.5 & 6 & 3.0 & All team members must start researching this part of the system early and also constantly brainstorm and share ideas so that our maximum innovation potential is reached. \\
+
+\hline
+
+Our team makes a repository error that breaks the project with no simple way of recovery & We may lose commit information, meaning we will have to redo work and also spend more time to fix the repository. & 0.4 & 7 & 2.8 & We will practice good repository techniques such as each person developing on their own branch and carefully reviewing changes before merging them. \\
+
+\hline
+
+\end{tabular}
+\hspace*{-2cm}

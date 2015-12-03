@@ -1,5 +1,4 @@
 *.aux
-*.blg
 *.lof
 *.pdf
 *.gz
@@ -8,3 +7,4 @@
 *.un~
 *.fls
 *.fdb_latexmk
+*.bib

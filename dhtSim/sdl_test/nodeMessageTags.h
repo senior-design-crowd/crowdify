@@ -1,15 +1,40 @@
 #ifndef __NODE_MSG_TAGS__
 #define __NODE_MSG_TAGS__
 
-namespace NodeMessageTags
+namespace NodeToRootMessageTags
 {
-	enum NodeMessageTag
+	enum NodeToRootMessageTag
 	{
-		NODE_ALIVE,
+		NODE_ALIVE = 0,
 		DHT_AREA_UPDATE,
-		NODE_TO_NODE_MSG
+		NEIGHBOR_UPDATE,
+		NODE_TO_NODE_MSG,
+		NUM_NODE_MSG_TAGS
 	};
 };
+
+namespace NodeToNodeMsgTypes
+{
+	enum NodeToNodeMsgType {
+		SENDING,
+		RECEIVING,
+		ROUTING,
+		IDLE
+	};
+}
+
+namespace NodeToRootMessage
+{
+	typedef struct {
+		int										otherNode;
+		NodeToNodeMsgTypes::NodeToNodeMsgType	msgType;
+	} NodeToNodeMsg;
+
+	typedef struct {
+		int neighbors[10];
+		int numNeighbors;
+	} NodeNeighborUpdate;
+}
 
 namespace NodeAliveStates
 {

@@ -4,14 +4,18 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <sstream>
 
 using namespace std;
 
 #include "header.h"
+#include "SDLEngine.h"
 
-string generateGraph(const vector<NodeState>& nodeStates, const vector<pair<int, int>>& nodeEdges, SDL_Rect* screenRect)
+string GenerateGraph(const vector<NodeState>& nodeStates, const vector<set<int>>& nodeEdges, SDLEngine* engine, int windowIndex)
 {
+	const Window& window = engine->GetWindow(windowIndex);
+
 	string attributes[] = {
 		" [fillcolor=white]",
 		" [fillcolor=green]",
@@ -23,28 +27,37 @@ string generateGraph(const vector<NodeState>& nodeStates, const vector<pair<int,
 
 	std::string graphDot;
 	ss << "digraph G {" << endl
-		<< "\tdpi=100.0;" << endl
-		<< "\tsize=\"" << screenRect->h / 100 << ',' << screenRect->w / 100 << "\";" << endl
-		<< "\tratio=compress;" << endl;
+		<< "\tdpi=60.0;" << endl
+		<< "\tsize=\"" << window.height / 100 << ',' << window.width / 100 << "\";" << endl;
+		//<< "\tratio=compress;" << endl;
 
 	size_t nodeNum = 0;
 	for (vector<NodeState>::const_iterator i = nodeStates.begin(); i != nodeStates.end(); ++i, ++nodeNum) {
+		if (!i->isAlive) {
+			continue;
+		}
+
 		ss << '\t' << nodeNum << " [shape=none label=< <table border='0' cellspacing='0'>" << endl
+			<< "\t\t\t<tr><td border='1'><font point-size=\"24\">" << nodeNum << "</font></td></tr>" << endl
 			<< "\t\t\t<tr><td border='1' bgcolor='";
 		
 		if (i->sendingNode >= 0) {
 			ss << "green'>" << i->sendingNode;
 		} else {
-			ss << "white'>T";
+			ss << "white'>R";
 		}
 
 		ss << "</td></tr>" << endl
 			<< "\t\t\t<tr><td border='1' bgcolor='";
 		
 		if (i->receivingNode >= 0) {
-			ss << "red'>" << i->receivingNode;
+			if (i->routing) {
+				ss << "yellow'>" << i->receivingNode;
+			} else {
+				ss << "red'>" << i->receivingNode;
+			}
 		} else {
-			ss << "white'>R";
+			ss << "white'>T";
 		}
 
 		ss << "</td></tr>" << endl
@@ -53,8 +66,11 @@ string generateGraph(const vector<NodeState>& nodeStates, const vector<pair<int,
 			<< "\t];" << endl;
 	}
 
-	for (vector<pair<int, int>>::const_iterator i = nodeEdges.begin(); i != nodeEdges.end(); ++i) {
-		ss << '\t' << i->first << " -> " << i->second << ';' << endl;
+	nodeNum = 0;
+	for (vector<set<int>>::const_iterator i = nodeEdges.begin(); i != nodeEdges.end(); ++i, ++nodeNum) {
+		for (set<int>::const_iterator j = i->begin(); j != i->end(); ++j) {
+			ss << '\t' << nodeNum << " -> " << *j << " [shape=none];" << endl;
+		}
 	}
 
 	ss << '}';
@@ -66,7 +82,7 @@ string generateGraph(const vector<NodeState>& nodeStates, const vector<pair<int,
 	return ss.str();
 }
 
-bool renderGraph(const string& graphDotStr, SDL_Surface* screenSurface, SDL_Surface** r_pngSurface)
+bool RenderGraph(const string& graphDotStr, SDLEngine* engine, int windowIndex, SDL_Texture** r_pngTexture, int& width, int& height)
 {
 	bool success = true;
 
@@ -98,12 +114,14 @@ bool renderGraph(const string& graphDotStr, SDL_Surface* screenSurface, SDL_Surf
 	}
 
 	// load the PNG image into a surface
-	*r_pngSurface = loadSurface(graphRenderingBuf, graphRenderingBufSize, screenSurface);
-	if (*r_pngSurface == NULL)
+	*r_pngTexture = engine->LoadSDLImage(graphRenderingBuf, graphRenderingBufSize, windowIndex, width, height);
+	if (*r_pngTexture == NULL)
 	{
 		printf("Failed to load graph PNG image!\n");
 		success = false;
 	}
+
+	gvFreeRenderData(graphRenderingBuf);
 
 	return success;
 }

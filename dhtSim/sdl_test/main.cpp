@@ -1,20 +1,24 @@
 #include <SDL.h>
 #include <mpi.h>
 
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <set>
+#include <fstream>
 #include <sstream>
 #include <chrono>
+#include <thread>
 #include <random>
 
 #include "header.h"
+#include "SDLEngine.h"
 #include "nodeMessageTags.h"
 
 using namespace std;
-
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
 
 typedef chrono::high_resolution_clock timer;
 
@@ -25,6 +29,12 @@ int main(int argc, char* argv[])
 	MPI_Init(&argc, &argv);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiNumNodes);
+
+	if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+		while (!IsDebuggerPresent()) {
+			this_thread::sleep_for(chrono::milliseconds(200));
+		}
+	}
 
 	// send all the other nodes my rank
 	for (int i = 0; i < mpiNumNodes; ++i) {
@@ -46,50 +56,43 @@ int main(int argc, char* argv[])
 	defaultState.routing = false;
 	defaultState.isAlive = false;
 
-	vector<pair<int, int>>	nodeEdges;
+	vector<set<int>>		nodeEdges(numNetworkNodes);
 	vector<NodeState>		nodeStates(numNetworkNodes, defaultState);
 	int						numAliveNodes = 0;
 
-	SDL_Window* nodeTransferWin = NULL;
-	int			nodeTransferWinID;
-	SDL_Surface* nodeTransferWinSurface = NULL;
-	SDL_Renderer* nodeTransferWinRenderer = NULL;
-	SDL_Rect	nodeTransferWinRect;
-	SDL_Window* dhtWin = NULL;
-	int			dhtWinID;
-	SDL_Surface* dhtWinSurface = NULL;
-	SDL_Renderer* dhtWinRenderer = NULL;
-	SDL_Rect	dhtWinRect;
-	SDL_Texture* graphTexture = NULL;
-	SDL_Rect	graphRect;
+	SDLEngine		engine;
 
-	bool success = sdl_init();
-	
-	if (success) {
-		success = sdl_createWindow("Node Transfer", &nodeTransferWin, &nodeTransferWinRenderer, &nodeTransferWinSurface);
-	}
+	SDL_Texture*	graphTexture = NULL;
+	SDL_Rect		graphRect;
+
+	vector<FontTexture>	nodeLabels;
+
+	bool success = engine.CreateSDLWindow("Node Transfer");
 
 	if(success) {
-		success = sdl_createWindow("DHT", &dhtWin, &dhtWinRenderer, &dhtWinSurface);
+		success = engine.CreateSDLWindow("DHT");
 	}
 
 	if (!success) {
 		printf("Failed to initialize SDL!\n");
 	} else {
-		SDL_Event	e;
+		vector<string>	nodeLabelStrings;
+		stringstream	nodeLabelSS;
+		SDL_Color		blackFontColor = { 0, 0, 0, 255 };
+
+		for (int i = 0; i < numNetworkNodes; ++i) {
+			nodeLabelSS.str("");
+			nodeLabelSS << i;
+			nodeLabelStrings.push_back(nodeLabelSS.str());
+		}
+
+		engine.CreateFontTextures("arial.ttf", 36, &blackFontColor, 1, nodeLabelStrings, nodeLabels);
+
 		MPI_Status	mpiStatus;
 		bool		graphStateChanged = true;
 
-		nodeTransferWinRect.w = SCREEN_WIDTH;
-		nodeTransferWinRect.h = SCREEN_HEIGHT;
-		nodeTransferWinID = SDL_GetWindowID(nodeTransferWin);
-		
-		dhtWinRect.w = SCREEN_WIDTH;
-		dhtWinRect.h = SCREEN_HEIGHT;
-		dhtWinID = SDL_GetWindowID(dhtWin);
-
-		FILE* fp = fopen("masterNode.txt", "w");
-		fprintf(fp, "my rank: %d\n", mpiRank);
+		ofstream fp("masterNode.txt");
+		fp << "my rank: " << mpiRank << endl;
 
 		NodeDHTArea			defaultDHTArea = { 0.0f, 0.0f, 0.0f, 0.0f};
 		vector<NodeDHTArea> dhtAreas(numNetworkNodes, defaultDHTArea);
@@ -98,68 +101,49 @@ int main(int argc, char* argv[])
 		// network
 		{
 			NodeAliveStates::NodeAliveState aliveState = NodeAliveStates::ONLY_NODE_IN_NETWORK;
-			MPI_Send((void*)&aliveState, 1, MPI_INT, 0, NodeMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+			MPI_Send((void*)&aliveState, 1, MPI_INT, 0, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
 			nodeStates[0].isAlive = true;
 			++numAliveNodes;
+
+			fp << "Sending ALIVE msg to node 0" << endl
+				<< "\tNode is only alive node in network" << endl;
 		}
 
+		vector<timer::time_point> lastNodeMsgStateChanges(numNetworkNodes);
+		const chrono::milliseconds milliTimeoutUntilNodeIdleState = chrono::milliseconds(300);
+
 		timer::time_point lastNodeAliveStateChange = timer::now();
-		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(10);
-		default_random_engine randGenerator(chrono::system_clock::now().time_since_epoch().count());
-		uniform_int_distribution<int> randomNodeGenerator(0, mpiNumNodes - 1);
+		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(3);
+
+		default_random_engine randGenerator((unsigned int)chrono::system_clock::now().time_since_epoch().count());
+		uniform_int_distribution<int> randomNodeGenerator(0, numNetworkNodes - 1);
 
 		// the main event loop
 		while (!quit) {
-			while (SDL_PollEvent(&e) != 0) {
-				if (e.type == SDL_QUIT) {
-					quit = true;
-				} else if (e.type == SDL_WINDOWEVENT) {
-					SDL_Window* window = NULL;
-					SDL_Rect* windowRect = NULL;
-					SDL_Renderer* windowRenderer = NULL;
-
-					if (e.window.windowID == nodeTransferWinID) {
-						window = nodeTransferWin;
-						windowRect = &nodeTransferWinRect;
-						windowRenderer = nodeTransferWinRenderer;
-					} else if (e.window.windowID == dhtWinID) {
-						window = dhtWin;
-						windowRect = &dhtWinRect;
-						windowRenderer = dhtWinRenderer;
-					}
-
-					if (e.window.type == SDL_WINDOWEVENT_SIZE_CHANGED) {
-						SDL_GetWindowSize(window, &windowRect->w, &windowRect->h);
-						SDL_RenderPresent(windowRenderer);
-					} else if (e.window.type == SDL_WINDOWEVENT_EXPOSED) {
-						SDL_RenderPresent(windowRenderer);
-					} else if (e.window.type == SDL_WINDOWEVENT_CLOSE) {
-						quit = true;
-						break;
-					}
-				}
-			}
-
-			if (quit) {
+			// if the program is quitting
+			if (engine.ProcessEvents()) {
 				break;
 			}
 
 			// check if its time to tell a new node to flip its
 			// alive state
-			if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeAliveStateChange) {
+			if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeAliveStateChange && numAliveNodes < numNetworkNodes) {
 				int nodeToChange = randomNodeGenerator(randGenerator);
 
-				while (nodeToChange == mpiRank) {
+				while (nodeToChange == mpiRank || nodeStates[nodeToChange].isAlive) {
 					nodeToChange = randomNodeGenerator(randGenerator);
 				}
+
+				fp << "Sending ALIVE msg to node " << nodeToChange << endl;
 
 				// if the node is already alive then kill it,
 				// otherwise bring it back to life again
 				//nodeStates[nodeToChange].isAlive = !nodeStates[nodeToChange].isAlive;
 
-				if(!nodeStates[nodeToChange].isAlive)
-				{
+				/*if(!nodeStates[nodeToChange].isAlive)
+				{*/
 					nodeStates[nodeToChange].isAlive = true;
+					graphStateChanged = true;
 
 					NodeAliveStates::NodeAliveState newAliveState;
 					int								aliveNode = -1;
@@ -179,6 +163,7 @@ int main(int argc, char* argv[])
 
 					if (numAliveNodes == 1) {
 						newAliveState = NodeAliveStates::ONLY_NODE_IN_NETWORK;
+						fp << "\tNode is only alive node in network";
 					} else {
 						newAliveState = NodeAliveStates::ALIVE;
 
@@ -188,100 +173,167 @@ int main(int argc, char* argv[])
 								break;
 							}
 						}
+
+						fp << "\tSending it alive node: " << aliveNode << endl;
 					}
 					//}
 
-					MPI_Send((void*)&newAliveState, 1, MPI_INT, nodeToChange, NodeMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+					fp.flush();
+
+					MPI_Send((void*)&newAliveState, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
 
 					if (aliveNode != -1) {
-						MPI_Send((void*)&aliveNode, 1, MPI_INT, nodeToChange, NodeMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+						MPI_Send((void*)&aliveNode, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
 					}
-				}
+				//}
 			}
 
 			// check if any new messages have been received
 
-			// update the node message status
 			int probeFlag;
-			MPI_Iprobe(MPI_ANY_SOURCE, NodeMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 
-			if (probeFlag) {
-				int src, dest;
-				MPI_Recv((void*)&dest, 1, MPI_INT, MPI_ANY_SOURCE, NodeMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &mpiStatus);
-				src = mpiStatus.MPI_SOURCE;
+			// update the node DHT areas
+			//while (probeFlag) {
+			for (int nodeNum = 0; nodeNum < numNetworkNodes; ++nodeNum) {
+				probeFlag = 0;
+				MPI_Iprobe(nodeNum, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 
-				if(dest >= 0) {
-					fprintf(fp, "Got message from %d to %d\n", src, dest);
-					fflush(fp);
+				if(probeFlag) {
+					NodeDHTArea newArea;
+					MPI_Recv((void*)&newArea, sizeof(NodeDHTArea) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 
-					nodeStates[src].receivingNode = dest;
-					nodeStates[dest].sendingNode = src;
-				} else {
-					nodeStates[src].receivingNode = -1;
-					nodeStates[src].sendingNode = -1;
+					fp << "Got DHT_AREA_UPDATE from " << mpiStatus.MPI_SOURCE << ":" << endl
+						<< "\tLeft: " << newArea.left << endl
+						<< "\tRight: " << newArea.right << endl
+						<< "\tTop: " << newArea.top << endl
+						<< "\tBottom: " << newArea.bottom << endl;
+
+					int src = mpiStatus.MPI_SOURCE;
+					dhtAreas[src] = newArea;
 				}
+			}
+
+			// update the node message status
+			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+			//while (probeFlag) {
+			if (probeFlag) {
+				NodeToRootMessage::NodeToNodeMsg msg;
+				MPI_Recv((void*)&msg, sizeof(NodeToRootMessage::NodeToNodeMsg) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				if (msg.msgType == NodeToNodeMsgTypes::SENDING) {
+					fp << "Got message from " << mpiStatus.MPI_SOURCE << " to " << msg.otherNode << endl;
+					fp.flush();
+
+					nodeStates[mpiStatus.MPI_SOURCE].receivingNode = msg.otherNode;
+				} else if (msg.msgType == NodeToNodeMsgTypes::RECEIVING) {
+					fp << "Got message from " << msg.otherNode << " to " << mpiStatus.MPI_SOURCE << endl;
+					fp.flush();
+
+					nodeStates[mpiStatus.MPI_SOURCE].sendingNode = msg.otherNode;
+				} else if (msg.msgType == NodeToNodeMsgTypes::ROUTING) {
+					fp << "Routing message from " << mpiStatus.MPI_SOURCE << " to " << msg.otherNode << endl;
+					fp.flush();
+
+					nodeStates[mpiStatus.MPI_SOURCE].receivingNode = msg.otherNode;
+					nodeStates[mpiStatus.MPI_SOURCE].routing = true;
+				} else if (msg.msgType == NodeToNodeMsgTypes::IDLE) {
+					nodeStates[mpiStatus.MPI_SOURCE].routing = false;
+					nodeStates[mpiStatus.MPI_SOURCE].sendingNode = -1;
+					nodeStates[mpiStatus.MPI_SOURCE].receivingNode = -1;
+				}
+
+				lastNodeMsgStateChanges[mpiStatus.MPI_SOURCE] = timer::now();
 				
 				graphStateChanged = true;
 				probeFlag = 0;
+
+				//MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 			}
 
-			// update the node DHT areas
-			MPI_Iprobe(MPI_ANY_SOURCE, NodeMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+			// check if any nodes have gone idle
+			{
+				vector<NodeState>::iterator state = nodeStates.begin();
+				for (vector<timer::time_point>::iterator i = lastNodeMsgStateChanges.begin(); i != lastNodeMsgStateChanges.end(); ++i, ++state) {
+					bool nodeIsIdle = state->receivingNode == -1 && state->sendingNode == -1;
+					if (chrono::duration_cast<chrono::milliseconds>(timer::now() - *i) >= milliTimeoutUntilNodeIdleState && state->isAlive && !nodeIsIdle) {
+						state->receivingNode = -1;
+						state->sendingNode = -1;
+						*i = timer::now();
+						graphStateChanged = true;
+					}
+				}
+			}
+
+			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 
 			if (probeFlag) {
-				NodeDHTArea newArea;
-				MPI_Recv((void*)&newArea, 4, MPI_FLOAT, MPI_ANY_SOURCE, NodeMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
-				int src = mpiStatus.MPI_SOURCE;
-				dhtAreas[src] = newArea;
+				NodeToRootMessage::NodeNeighborUpdate neighborUpdate;
+				MPI_Recv((void*)&neighborUpdate, sizeof(NodeToRootMessage::NodeNeighborUpdate)/sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+				
+				// update node edges
+				nodeEdges[mpiStatus.MPI_SOURCE].clear();
+				for (int i = 0; i < neighborUpdate.numNeighbors; ++i) {
+					// don't insert edge if it will create a cycle, i.e. if the node we're pointing to
+					// already has an edge that points to us
+					if (nodeEdges[neighborUpdate.neighbors[i]].find(mpiStatus.MPI_SOURCE) == nodeEdges[neighborUpdate.neighbors[i]].end()) {
+						nodeEdges[mpiStatus.MPI_SOURCE].insert(neighborUpdate.neighbors[i]);
+					}
+				}
+
+				graphStateChanged = true;
 			}
 
 			// if the node states have changed
 			// then rerender the graph
 			if(graphStateChanged) {
 				// generate the graph DOT file
-				string graphDotStr = generateGraph(nodeStates, nodeEdges, &nodeTransferWinRect);
-				SDL_Surface* graphSurface;
+				string graphDotStr = GenerateGraph(nodeStates, nodeEdges, &engine, 0);
+
+				if (graphTexture) {
+					SDL_DestroyTexture(graphTexture);
+				}
 
 				// create the surface for the graph
-				if (!renderGraph(graphDotStr, nodeTransferWinSurface, &graphSurface))
+				if (!RenderGraph(graphDotStr, &engine, 0, &graphTexture, graphRect.w, graphRect.h))
 				{
 					printf("Failed to render graph!\n");
 					quit = true;
 					break;
 				}
 
-				graphRect.w = graphSurface->w;
-				graphRect.h = graphSurface->h;
-
-				graphTexture = SDL_CreateTextureFromSurface(nodeTransferWinRenderer, graphSurface);
-				SDL_FreeSurface(graphSurface);
-
 				graphStateChanged = false;
 			}
 
 			// fill background with white
-			SDL_SetRenderDrawColor(nodeTransferWinRenderer, 255, 255, 255, 255);
-			SDL_RenderClear(nodeTransferWinRenderer);
-			SDL_SetRenderDrawColor(dhtWinRenderer, 255, 255, 255, 255);
-			SDL_RenderClear(dhtWinRenderer);
+			engine.ClearWindow(0);
+			engine.ClearWindow(1);
 
 			// render graph png image
 			// in the center of the screen
-			SDL_Rect screenCenter;
-			screenCenter.x = (nodeTransferWinRect.w - graphRect.w) / 2;
-			screenCenter.y = (nodeTransferWinRect.h - graphRect.h) / 2;
+			const Window&	nodeTransferWin = engine.GetWindow(0);
+			SDL_Rect		screenCenter, srcRect;
+
+			screenCenter.x = (nodeTransferWin.width - graphRect.w) / 2;
+			screenCenter.y = (nodeTransferWin.height - graphRect.h) / 2;
 			screenCenter.w = graphRect.w;
 			screenCenter.h = graphRect.h;
 
-			SDL_RenderCopy(nodeTransferWinRenderer, graphTexture, NULL, &screenCenter);
-			SDL_RenderPresent(nodeTransferWinRenderer);
+			srcRect.x = 0;
+			srcRect.y = 0;
+			srcRect.w = graphRect.w;
+			srcRect.h = graphRect.h;
 
-			RenderDHT(dhtAreas, dhtWinRenderer, &dhtWinRect);
-			SDL_RenderPresent(dhtWinRenderer);
+			engine.RenderTexture(0, graphTexture, &screenCenter, &srcRect);
+			engine.PresentWindow(0);
+
+			RenderDHT(dhtAreas, nodeLabels, &engine, 1);
+			engine.PresentWindow(1);
+
+			this_thread::sleep_for(chrono::milliseconds(20));
 		}
 	}
-	
-	sdl_close(&nodeTransferWin);
+
 	MPI_Abort(MPI_COMM_WORLD, 0);
 	MPI_Finalize();
 

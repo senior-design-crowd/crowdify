@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 
 #include "header.h"
 
@@ -20,6 +21,9 @@ bool sdl_init()
 		if (!(IMG_Init(imgFlags) & imgFlags))
 		{
 			printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+			success = false;
+		} else if (!TTF_Init() == -1) {
+			printf("SDL_TTF could not initialize! SDL_TTF Error: %s\n", TTF_GetError());
 			success = false;
 		}
 	}
@@ -63,6 +67,7 @@ void sdl_close(SDL_Window** nodeTransferWin)
 
 	// quit SDL and SDL_Image
 	IMG_Quit();
+	TTF_Quit();
 	SDL_Quit();
 }
 

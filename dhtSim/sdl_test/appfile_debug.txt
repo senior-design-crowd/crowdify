@@ -1,0 +1,2 @@
+-np 10 ..\Debug\node.exe -d
+-np 1 ..\Debug\sdl_test.exe -d

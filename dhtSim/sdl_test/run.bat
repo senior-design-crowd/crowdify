@@ -1,0 +1,1 @@
+mpiexec -configfile appfile.txt

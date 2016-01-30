@@ -42,6 +42,8 @@ S.  Ratnasamy, P.  Francis, M.  Handley, R.  Karp and S.  Schenker, "A scalable 
 \bibitem{multiagent}
 Shibakawa, M.; Uchiya, T.; Takumi, I.; Kinoshita, T., "Design and implementation of multiagent-based distributed backup system," in Computer and Information Science (ICIS), 2013 IEEE/ACIS 12th International Conference on , vol., no., pp.235-240, 16-20 June 2013.
 
+\bibitem{scalablecan}
+S.  Ratnasamy, P.  Francis, M.  Handley, R.  Karp and S.  Schenker, "A scalable content-addressable network", ACM SIGCOMM Computer Communication Review, vol. 31, no. 4, pp. 161-172, 2001.
 
 \bibitem{pepperdine}
 D.  Smith, 'The Cost of Lost Data', Graziadio Business Review, vol. 6, no. 3, 2003.

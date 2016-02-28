@@ -21,15 +21,21 @@
     <ClCompile Include="graphRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="sdl.cpp">
+    <ClCompile Include="networkRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="networkRenderer.cpp">
+    <ClCompile Include="SDLEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="nodeMessageTags.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SDLEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

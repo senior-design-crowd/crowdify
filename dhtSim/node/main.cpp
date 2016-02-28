@@ -18,6 +18,232 @@ using namespace std;
 
 void NotifyRootOfMsg(NodeToNodeMsgTypes::NodeToNodeMsgType msgType, int otherNode, int rootRank);
 
+namespace InterNodeMessage {
+	MPI_Datatype MPI_NodeDHTArea;
+	MPI_Datatype MPI_NodeNeighbor;
+	MPI_Datatype MPI_DHTPointOwnerRequest;
+	MPI_Datatype MPI_DHTPointOwnerResponse;
+	MPI_Datatype MPI_DHTAreaResponse;
+	MPI_Datatype MPI_NodeTakeoverInfo;
+	MPI_Datatype MPI_NodeTakeoverResponse;
+}
+
+void InitMPITypes()
+{
+	int ret = -1;
+
+	// MPI_NodeDHTArea
+	{
+		/*
+		typedef struct _NodeDHTArea {
+			float left, right, top, bottom;
+		} NodeDHTArea;
+		*/
+
+		MPI_Datatype types[] = { MPI_FLOAT };
+		int blockSizes[] = { 4 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &InterNodeMessage::MPI_NodeDHTArea);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_NodeDHTArea struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_NodeDHTArea);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_NodeDHTArea struct.", "Error", MB_OK);
+		}
+	}
+
+	// MPI_NodeNeighbor
+	{
+		/*
+		typedef struct {
+			int			nodeNum;
+			NodeDHTArea neighborArea;
+		} NodeNeighbor;
+		*/
+
+		MPI_Datatype types[] = { InterNodeMessage::MPI_NodeDHTArea, MPI_INT };
+		int blockSizes[] = { 1, 1 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0),
+			static_cast<MPI_Aint>(0)
+		};
+
+		MPI_Aint lb;
+		ret = MPI_Type_get_extent(InterNodeMessage::MPI_NodeDHTArea, &lb, &displacements[1]);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error getting extent.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_create_struct(2, blockSizes, displacements, types, &InterNodeMessage::MPI_NodeNeighbor);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_NodeNeighbor struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_NodeNeighbor);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_NodeNeighbor struct.", "Error", MB_OK);
+		}
+	}
+
+	// MPI_DHTPointOwnerRequest
+	{
+		/*
+		typedef struct
+		{
+		float	x, y;
+		int		origRequestingNode;
+		} DHTPointOwnerRequest;
+		*/
+
+		MPI_Datatype types[] = { MPI_FLOAT, MPI_INT };
+		int blockSizes[] = { 2, 1 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0),
+			static_cast<MPI_Aint>(sizeof(float) * 2)
+		};
+
+		ret = MPI_Type_create_struct(2, blockSizes, displacements, types, &InterNodeMessage::MPI_DHTPointOwnerRequest);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_DHTPointOwnerRequest struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_DHTPointOwnerRequest);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_DHTPointOwnerRequest struct.", "Error", MB_OK);
+		}
+	}
+
+	// MPI_DHTPointOwnerResponse
+	{
+		/*
+		typedef struct
+		{
+			int pointOwnerNode;
+		} DHTPointOwnerResponse;
+		*/
+
+		MPI_Datatype types[] = { MPI_INT };
+		int blockSizes[] = { 1 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &InterNodeMessage::MPI_DHTPointOwnerResponse);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_DHTPointOwnerResponse struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_DHTPointOwnerResponse);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_DHTPointOwnerResponse struct.", "Error", MB_OK);
+		}
+	}
+
+	// MPI_DHTAreaResponse
+	{
+		/*
+		typedef struct {
+			NodeDHTArea		newDHTArea;
+			int				numNeighbors;
+			int				nextAxisToSplit;
+		} DHTAreaResponse;
+		*/
+		
+		MPI_Datatype types[] = { InterNodeMessage::MPI_NodeDHTArea, MPI_INT };
+		int blockSizes[] = { 1, 2 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0),
+			static_cast<MPI_Aint>(0)
+		};
+
+		MPI_Aint lb;
+		ret = MPI_Type_get_extent(InterNodeMessage::MPI_NodeDHTArea, &lb, &displacements[1]);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error getting extent.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_create_struct(2, blockSizes, displacements, types, &InterNodeMessage::MPI_DHTAreaResponse);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_DHTAreaResponse struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_DHTAreaResponse);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_DHTAreaResponse struct.", "Error", MB_OK);
+		}
+	}
+
+	// MPI_NodeTakeoverInfo
+	{
+		/*
+		typedef struct
+		{
+			int				nodeNum;
+			NodeDHTArea		myDHTArea;
+		} NodeTakeoverInfo;
+		*/
+
+		MPI_Datatype types[] = { MPI_INT, InterNodeMessage::MPI_NodeDHTArea };
+		int blockSizes[] = { 1, 1 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0),
+			static_cast<MPI_Aint>(sizeof(int))
+		};
+
+		ret = MPI_Type_create_struct(2, blockSizes, displacements, types, &InterNodeMessage::MPI_NodeTakeoverInfo);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_NodeTakeoverInfo struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_NodeTakeoverInfo);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_NodeTakeoverInfo struct.", "Error", MB_OK);
+		}
+	}
+
+	// MPI_NodeTakeoverResponse
+	{
+		/*
+		typedef struct
+		{
+			int				nodeNum;
+
+			enum ResponseType : unsigned int {
+				CAN_TAKEOVER = 1,
+				SMALLER_AREA,
+				NOT_MY_NEIGHBOR,
+				NODE_STILL_ALIVE
+			};
+
+			ResponseType	response;
+			NodeDHTArea		myDHTArea;
+		} NodeTakeoverResponse;
+		*/
+
+		MPI_Datatype types[] = { MPI_INT, InterNodeMessage::MPI_NodeDHTArea };
+		int blockSizes[] = { 2, 1 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0),
+			static_cast<MPI_Aint>(2 * sizeof(int))
+		};
+
+		ret = MPI_Type_create_struct(2, blockSizes, displacements, types, &InterNodeMessage::MPI_NodeTakeoverResponse);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error creating MPI_NodeTakeoverResponse struct.", "Error", MB_OK);
+		}
+
+		ret = MPI_Type_commit(&InterNodeMessage::MPI_NodeTakeoverResponse);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error committing MPI_NodeTakeoverResponse struct.", "Error", MB_OK);
+		}
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	bool alive = false;
@@ -31,6 +257,8 @@ int main(int argc, char* argv[])
 			this_thread::sleep_for(chrono::milliseconds(200));
 		}
 	}
+
+	InitMPITypes();
 
 	MPI_Status	mpiStatus;
 	int			rootRank;
@@ -117,10 +345,59 @@ int main(int argc, char* argv[])
 				fp << node.LogOutputHeader() << "Got MPI message from " << mpiStatus.MPI_SOURCE << ": NODE_TAKEOVER_REQUEST" << endl;
 				fp.flush();
 
-				InterNodeMessage::NodeTakeoverRequest nodeTakeoverRequest;
-				MPI_Recv((void*)&nodeTakeoverRequest, sizeof(InterNodeMessage::NodeTakeoverRequest) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_REQUEST, MPI_COMM_WORLD, &mpiStatus);
+				InterNodeMessage::NodeTakeoverInfo nodeTakeoverRequest;
+				MPI_Recv((void*)&nodeTakeoverRequest, 1, InterNodeMessage::MPI_NodeTakeoverInfo, MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_REQUEST, MPI_COMM_WORLD, &mpiStatus);
 
-				node.ResolveNodeTakeoverRequest(mpiStatus.MPI_SOURCE, &nodeTakeoverRequest);
+				fp << node.LogOutputHeader() << "\tNode takeover request:" << endl
+					<< "\t\tNode num: " << nodeTakeoverRequest.nodeNum << endl
+					<< "\t\tDHT Area: " << endl
+					<< "\t\t\tLeft: " << nodeTakeoverRequest.myDHTArea.left << endl
+					<< "\t\t\tRight: " << nodeTakeoverRequest.myDHTArea.right << endl
+					<< "\t\t\tTop: " << nodeTakeoverRequest.myDHTArea.top << endl
+					<< "\t\t\tBottom: " << nodeTakeoverRequest.myDHTArea.bottom << endl;
+				fp.flush();
+
+				node.ResolveNodeTakeoverRequest(mpiStatus.MPI_SOURCE, nodeTakeoverRequest);
+
+				newMsg = 0;
+				MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_REQUEST, MPI_COMM_WORLD, &newMsg, &mpiStatus);
+			}
+
+			newMsg = 0;
+			MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD, &newMsg, &mpiStatus);
+
+			while (newMsg == 1) {
+				fp << node.LogOutputHeader() << "Got MPI message from " << mpiStatus.MPI_SOURCE << ": NODE_TAKEOVER_RESPONSE" << endl;
+				fp.flush();
+
+				InterNodeMessage::NodeTakeoverResponse nodeTakeoverResponse;
+				memset((void*)&nodeTakeoverResponse, 0, sizeof(InterNodeMessage::NodeTakeoverResponse));
+				MPI_Recv((void*)&nodeTakeoverResponse, 1, InterNodeMessage::MPI_NodeTakeoverResponse, MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_REQUEST, MPI_COMM_WORLD, &mpiStatus);
+
+				fp << node.LogOutputHeader() << "\tNode takeover response:" << endl
+					<< "\t\tNode num: " << nodeTakeoverResponse.nodeNum << endl
+					<< "\t\tDHT Area: " << endl
+					<< "\t\t\tLeft: " << nodeTakeoverResponse.myDHTArea.left << endl
+					<< "\t\t\tRight: " << nodeTakeoverResponse.myDHTArea.right << endl
+					<< "\t\t\tTop: " << nodeTakeoverResponse.myDHTArea.top << endl
+					<< "\t\t\tBottom: " << nodeTakeoverResponse.myDHTArea.bottom << endl;
+
+				if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::CAN_TAKEOVER) {
+					fp << "\t\tResponse: CAN_TAKEOVER" << endl;
+				} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::NODE_STILL_ALIVE) {
+					fp << "\t\tResponse: NODE_STILL_ALIVE" << endl;
+				} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::NOT_MY_NEIGHBOR) {
+					fp << "\t\tResponse: NOT_MY_NEIGHBOR" << endl;
+				} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::SMALLER_AREA) {
+					fp << "\t\tResponse: SMALLER_AREA" << endl;
+				} else {
+					fp << "\t\tResponse: UNKNOWN (" << nodeTakeoverResponse.response << ")" << endl;
+				}
+
+				node.ResolveNodeTakeoverResponse(mpiStatus.MPI_SOURCE, nodeTakeoverResponse);
+
+				newMsg = 0;
+				MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD, &newMsg, &mpiStatus);
 			}
 
 			newMsg = 0;
@@ -129,29 +406,29 @@ int main(int argc, char* argv[])
 				fp << node.LogOutputHeader() << "Got MPI message from " << mpiStatus.MPI_SOURCE << ": NEIGHBOR_UPDATE" << endl;
 				fp.flush();
 
-				fp << "\tGetting neighbor area." << endl;
-				fp.flush();
+				/*fp << "\tGetting neighbor area." << endl;
+				fp.flush();*/
 				NodeDHTArea neighborDHTArea;
-				MPI_Recv((void*)&neighborDHTArea, sizeof(NodeDHTArea) / sizeof(int), MPI_INT, mpiStatus.MPI_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&neighborDHTArea, 1, InterNodeMessage::MPI_NodeDHTArea, mpiStatus.MPI_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 
-				fp << "\tGetting # neighbors." << endl;
-				fp.flush();
+				/*fp << "\tGetting # neighbors." << endl;
+				fp.flush();*/
 				int numNeighborsOfNeighbor;
 				MPI_Recv((void*)&numNeighborsOfNeighbor, 1, MPI_INT, mpiStatus.MPI_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 
-				fp << "\tGetting neighbors of neighbor." << endl;
-				fp.flush();
+				/*fp << "\tGetting neighbors of neighbor." << endl;
+				fp.flush();*/
 				vector<NodeNeighbor> neighborsOfNeighbor;
 				neighborsOfNeighbor.resize(numNeighborsOfNeighbor);
-				MPI_Recv((void*)&neighborsOfNeighbor[0], numNeighborsOfNeighbor * sizeof(NodeNeighbor) / sizeof(int), MPI_INT, mpiStatus.MPI_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&neighborsOfNeighbor[0], numNeighborsOfNeighbor, InterNodeMessage::MPI_NodeNeighbor, mpiStatus.MPI_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 
-				fp << "\tUpdating neighbor info." << endl;
-				fp.flush();
+				/*fp << "\tUpdating neighbor info." << endl;
+				fp.flush();*/
 				node.UpdateNeighborDHTArea(mpiStatus.MPI_SOURCE, neighborDHTArea, neighborsOfNeighbor);
 
 				NotifyRootOfMsg(NodeToNodeMsgTypes::RECEIVING, mpiStatus.MPI_SOURCE, rootRank);
 
-				fp << node.LogOutputHeader() << "\tNew neighbor DHT area:" << endl
+				/*fp << node.LogOutputHeader() << "\tNew neighbor DHT area:" << endl
 					<< "\t\tLeft: " << neighborDHTArea.left << endl
 					<< "\t\tRight: " << neighborDHTArea.right << endl
 					<< "\t\tTop: " << neighborDHTArea.top << endl
@@ -164,7 +441,7 @@ int main(int argc, char* argv[])
 						<< "\t\tRight: " << i->neighborArea.right << endl
 						<< "\t\tTop: " << i->neighborArea.top << endl
 						<< "\t\tBottom: " << i->neighborArea.bottom << endl;
-				}
+				}*/
 
 				newMsg = 0;
 				MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &newMsg, &mpiStatus);
@@ -194,15 +471,15 @@ int main(int argc, char* argv[])
 				fp << node.LogOutputHeader() << "Sending new DHT area to: " << mpiStatus.MPI_SOURCE << endl;
 
 				MPI_Send((void*)&dhtAreaResponse,
-					sizeof(InterNodeMessage::DHTAreaResponse) / sizeof(int),
-					MPI_INT,
+					1,
+					InterNodeMessage::MPI_DHTAreaResponse,
 					mpiStatus.MPI_SOURCE,
 					InterNodeMessageTags::RESPONSE_DHT_AREA,
 					MPI_COMM_WORLD);
 
 				MPI_Send((void*)&vNewNodeNeighbors[0],
-					vNewNodeNeighbors.size() * sizeof(NodeNeighbor) / sizeof(int),
-					MPI_INT,
+					vNewNodeNeighbors.size(),
+					InterNodeMessage::MPI_NodeNeighbor,
 					mpiStatus.MPI_SOURCE,
 					InterNodeMessageTags::RESPONSE_DHT_AREA,
 					MPI_COMM_WORLD);
@@ -221,8 +498,8 @@ int main(int argc, char* argv[])
 
 					if(numNeighborsOfNeighbor > 0) {
 						MPI_Send((void*)&vNewNodeNeighborsOfNeighbors[i][0],
-							numNeighborsOfNeighbor * sizeof(NodeNeighbor) / sizeof(int),
-							MPI_INT,
+							numNeighborsOfNeighbor,
+							InterNodeMessage::MPI_NodeNeighbor,
 							mpiStatus.MPI_SOURCE,
 							InterNodeMessageTags::RESPONSE_DHT_AREA,
 							MPI_COMM_WORLD);
@@ -250,7 +527,7 @@ int main(int argc, char* argv[])
 				fp.flush();
 
 				InterNodeMessage::DHTPointOwnerRequest pointOwnerRequest;
-				MPI_Recv((void*)&pointOwnerRequest, sizeof(InterNodeMessage::DHTPointOwnerRequest) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, InterNodeMessageTags::REQUEST_DHT_POINT_OWNER, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&pointOwnerRequest, 1, InterNodeMessage::MPI_DHTPointOwnerRequest, MPI_ANY_SOURCE, InterNodeMessageTags::REQUEST_DHT_POINT_OWNER, MPI_COMM_WORLD, &mpiStatus);
 
 				fp << node.LogOutputHeader() << "\tPoint ownership request originally from " << pointOwnerRequest.origRequestingNode << ": (" << pointOwnerRequest.x << ", " << pointOwnerRequest.y << ")" << endl;
 
@@ -267,12 +544,12 @@ int main(int argc, char* argv[])
 				if (pointOwnerResponse.pointOwnerNode == -1) {
 					fp << "self" << endl;
 					pointOwnerResponse.pointOwnerNode = mpiRank;
-					MPI_Send((void*)&pointOwnerResponse, sizeof(InterNodeMessage::DHTPointOwnerResponse) / sizeof(int), MPI_INT, pointOwnerRequest.origRequestingNode, InterNodeMessageTags::RESPONSE_DHT_POINT_OWNER, MPI_COMM_WORLD);
+					MPI_Send((void*)&pointOwnerResponse, 1, InterNodeMessage::MPI_DHTPointOwnerResponse, pointOwnerRequest.origRequestingNode, InterNodeMessageTags::RESPONSE_DHT_POINT_OWNER, MPI_COMM_WORLD);
 
 					NotifyRootOfMsg(NodeToNodeMsgTypes::SENDING, pointOwnerRequest.origRequestingNode, rootRank);
 				} else {
 					fp << pointOwnerResponse.pointOwnerNode << endl;
-					MPI_Send((void*)&pointOwnerRequest, sizeof(InterNodeMessage::DHTPointOwnerRequest) / sizeof(int), MPI_INT, pointOwnerResponse.pointOwnerNode, InterNodeMessageTags::REQUEST_DHT_POINT_OWNER, MPI_COMM_WORLD);
+					MPI_Send((void*)&pointOwnerRequest, 1, InterNodeMessage::MPI_DHTPointOwnerRequest, pointOwnerResponse.pointOwnerNode, InterNodeMessageTags::REQUEST_DHT_POINT_OWNER, MPI_COMM_WORLD);
 
 					NotifyRootOfMsg(NodeToNodeMsgTypes::ROUTING, pointOwnerResponse.pointOwnerNode, rootRank);
 				}

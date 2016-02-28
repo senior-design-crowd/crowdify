@@ -65,6 +65,9 @@ int main(int argc, char* argv[])
 	SDL_Texture*	graphTexture = NULL;
 	SDL_Rect		graphRect;
 
+	int				graphFrame = 0, dhtFrame = 0;
+	bool			dhtChanged = true;
+
 	vector<FontTexture>	nodeLabels;
 
 	bool success = engine.CreateSDLWindow("Node Transfer");
@@ -113,7 +116,11 @@ int main(int argc, char* argv[])
 		const chrono::milliseconds milliTimeoutUntilNodeIdleState = chrono::milliseconds(300);
 
 		timer::time_point lastNodeAliveStateChange = timer::now();
-		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(3);
+		const chrono::milliseconds milliUntilNextNodeBroughtAlive = chrono::seconds(1);
+		//const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(120);
+		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(20);
+
+		int nodeChangingStage = 0;
 
 		default_random_engine randGenerator((unsigned int)chrono::system_clock::now().time_since_epoch().count());
 		uniform_int_distribution<int> randomNodeGenerator(0, numNetworkNodes - 1);
@@ -127,65 +134,103 @@ int main(int argc, char* argv[])
 
 			// check if its time to tell a new node to flip its
 			// alive state
-			if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeAliveStateChange && numAliveNodes < numNetworkNodes) {
+			bool timeToSwitchState = false;
+			if (nodeChangingStage == 0) {
+				if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeBroughtAlive) {
+					timeToSwitchState = true;
+				}
+			} else if (nodeChangingStage == 1) {
+				if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeAliveStateChange) {
+					timeToSwitchState = true;
+				}
+			}
+
+			if (timeToSwitchState) {
 				int nodeToChange = randomNodeGenerator(randGenerator);
 
-				while (nodeToChange == mpiRank || nodeStates[nodeToChange].isAlive) {
-					nodeToChange = randomNodeGenerator(randGenerator);
+				if (nodeChangingStage == 0) {
+					while (nodeToChange == mpiRank || nodeStates[nodeToChange].isAlive) {
+						nodeToChange = randomNodeGenerator(randGenerator);
+					}
+
+					nodeStates[nodeToChange].isAlive = true;
+				} else if (nodeChangingStage == 1) {
+					nodeToChange = 0;
+					while (nodeToChange == mpiRank) {
+						nodeToChange = randomNodeGenerator(randGenerator);
+					}
+
+					// flip its alive state
+					nodeStates[nodeToChange].isAlive = !nodeStates[nodeToChange].isAlive;
 				}
 
-				fp << "Sending ALIVE msg to node " << nodeToChange << endl;
+				fp << "Changing node " << nodeToChange << "'s alive state." << endl;
 
-				// if the node is already alive then kill it,
-				// otherwise bring it back to life again
-				//nodeStates[nodeToChange].isAlive = !nodeStates[nodeToChange].isAlive;
+				graphStateChanged = true;
 
-				/*if(!nodeStates[nodeToChange].isAlive)
-				{*/
-					nodeStates[nodeToChange].isAlive = true;
-					graphStateChanged = true;
+				NodeAliveStates::NodeAliveState newAliveState;
+				int								aliveNode = -1;
 
-					NodeAliveStates::NodeAliveState newAliveState;
-					int								aliveNode = -1;
-
-					// if we're killing a node, we have to remove
-					// its DHT area
-
-					//
-					// NOTE: don't kill off any nodes for now
-					//
-					/*if (!nodeStates[nodeToChange].isAlive) {
-					dhtAreas[nodeToChange] = defaultDHTArea;
-					--numAliveNodes;
-					newAliveState = NodeAliveStates::DEAD;
-					} else {*/
+				if (nodeStates[nodeToChange].isAlive) {
+					fp << "Sending ALIVE msg to node " << nodeToChange << endl;
 					++numAliveNodes;
+
+					fp << numAliveNodes << " out of " << numNetworkNodes << " alive." << endl;
+
+					if (numAliveNodes == numNetworkNodes) {
+						fp << "Switching to node changing stage 1, where alive states are continually flipped." << endl;
+						nodeChangingStage = 1;
+					}
 
 					if (numAliveNodes == 1) {
 						newAliveState = NodeAliveStates::ONLY_NODE_IN_NETWORK;
 						fp << "\tNode is only alive node in network";
 					} else {
 						newAliveState = NodeAliveStates::ALIVE;
+					}
+				} else {
+					fp << "Sending KILL msg to node " << nodeToChange << endl;
+					newAliveState = NodeAliveStates::DEAD;
+					--numAliveNodes;
 
-						// find the first alive node
-						for (aliveNode = 0; aliveNode < numNetworkNodes; ++aliveNode) {
-							if (nodeStates[aliveNode].isAlive && aliveNode != nodeToChange) {
-								break;
-							}
+					dhtAreas[nodeToChange].left = 0.0f;
+					dhtAreas[nodeToChange].right = 0.0f;
+					dhtAreas[nodeToChange].top = 0.0f;
+					dhtAreas[nodeToChange].bottom = 0.0f;
+
+					nodeStates[nodeToChange].isAlive = false;
+					graphStateChanged = true;
+
+					if (numAliveNodes < 2) {
+						fp << "Switching to node changing stage 0, where nodes are all brought to life." << endl;
+						nodeChangingStage = 0;
+					}
+
+
+					// TEMPORARY FIX TO ONLY ALLOW ONE NODE TO BE KILLED AT A TIME
+					nodeChangingStage = 2;
+				}
+
+				if (newAliveState == NodeAliveStates::ALIVE) {
+					// find the first alive node
+					for (aliveNode = 0; aliveNode < numNetworkNodes; ++aliveNode) {
+						if (nodeStates[aliveNode].isAlive && aliveNode != nodeToChange) {
+							break;
 						}
-
-						fp << "\tSending it alive node: " << aliveNode << endl;
 					}
-					//}
 
-					fp.flush();
+					fp << "\tSending it alive node: " << aliveNode << endl;
+				}
 
-					MPI_Send((void*)&newAliveState, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+				fp.flush();
 
-					if (aliveNode != -1) {
-						MPI_Send((void*)&aliveNode, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
-					}
-				//}
+				MPI_Send((void*)&newAliveState, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+
+				if (newAliveState == NodeAliveStates::ALIVE) {
+					MPI_Send((void*)&aliveNode, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+				}
+
+				lastNodeAliveStateChange = timer::now();
 			}
 
 			// check if any new messages have been received
@@ -210,6 +255,7 @@ int main(int argc, char* argv[])
 
 					int src = mpiStatus.MPI_SOURCE;
 					dhtAreas[src] = newArea;
+					dhtChanged = true;
 				}
 			}
 
@@ -329,6 +375,18 @@ int main(int argc, char* argv[])
 
 			RenderDHT(dhtAreas, nodeLabels, &engine, 1);
 			engine.PresentWindow(1);
+
+			++graphFrame;
+			
+			if (dhtChanged) {
+				++dhtFrame;
+
+				stringstream ss;
+				ss << "Images\\dht_frame" << dhtFrame << ".bmp";
+
+				engine.TakeScreenshot(1, ss.str().c_str());
+				dhtChanged = false;
+			}
 
 			this_thread::sleep_for(chrono::milliseconds(20));
 		}

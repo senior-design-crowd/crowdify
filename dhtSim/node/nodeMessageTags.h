@@ -58,22 +58,30 @@ namespace InterNodeMessageTags
 		RESPONSE_DHT_AREA,
 		NEIGHBOR_UPDATE,
 		NODE_TAKEOVER_REQUEST,
-		NODE_TAKEOVER_RESPONSE
+		NODE_TAKEOVER_RESPONSE,
+		NODE_TAKEOVER_NOTIFY
 	};
 };
 
 namespace InterNodeMessage
 {
+	extern MPI_Datatype MPI_NodeDHTArea;
+	extern MPI_Datatype MPI_NodeNeighbor;
+
 	typedef struct
 	{
 		float	x, y;
 		int		origRequestingNode;
 	} DHTPointOwnerRequest;
 
+	extern MPI_Datatype MPI_DHTPointOwnerRequest;
+
 	typedef struct
 	{
 		int pointOwnerNode;
 	} DHTPointOwnerResponse;
+
+	extern MPI_Datatype MPI_DHTPointOwnerResponse;
 
 	typedef struct
 	{
@@ -82,25 +90,32 @@ namespace InterNodeMessage
 		int				nextAxisToSplit;
 	} DHTAreaResponse;
 
-	typedef struct
-	{
-		int				nodeNum;
-		NodeDHTArea		myDHTArea;
-	} NodeTakeoverRequest;
+	extern MPI_Datatype MPI_DHTAreaResponse;
 
 	typedef struct
 	{
 		int				nodeNum;
 		NodeDHTArea		myDHTArea;
+	} NodeTakeoverInfo;
 
-		enum
-		{
-			SUCCESS,
+	extern MPI_Datatype MPI_NodeTakeoverInfo;
+
+	typedef struct
+	{
+		int				nodeNum;
+
+		enum ResponseType : unsigned int {
+			CAN_TAKEOVER = 1,
 			SMALLER_AREA,
 			NOT_MY_NEIGHBOR,
 			NODE_STILL_ALIVE
-		} Response;
+		};
+
+		int				response;
+		NodeDHTArea		myDHTArea;
 	} NodeTakeoverResponse;
+
+	extern MPI_Datatype MPI_NodeTakeoverResponse;
 };
 
 void NotifyRootOfMsg(NodeToNodeMsgTypes::NodeToNodeMsgType msgType, int otherNode, int rootRank);

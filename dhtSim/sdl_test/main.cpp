@@ -118,7 +118,7 @@ int main(int argc, char* argv[])
 		timer::time_point lastNodeAliveStateChange = timer::now();
 		const chrono::milliseconds milliUntilNextNodeBroughtAlive = chrono::seconds(1);
 		//const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(120);
-		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(20);
+		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(3);
 
 		int nodeChangingStage = 0;
 

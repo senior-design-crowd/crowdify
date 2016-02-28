@@ -211,6 +211,7 @@ void InitMPITypes()
 		/*
 		typedef struct
 		{
+			NodeDHTArea		myDHTArea;
 			int				nodeNum;
 
 			enum ResponseType : unsigned int {
@@ -221,16 +222,21 @@ void InitMPITypes()
 			};
 
 			ResponseType	response;
-			NodeDHTArea		myDHTArea;
 		} NodeTakeoverResponse;
 		*/
 
-		MPI_Datatype types[] = { MPI_INT, InterNodeMessage::MPI_NodeDHTArea };
-		int blockSizes[] = { 2, 1 };
+		MPI_Datatype types[] = { InterNodeMessage::MPI_NodeDHTArea, MPI_LONG };
+		int blockSizes[] = { 1, 2 };
 		MPI_Aint displacements[] = {
 			static_cast<MPI_Aint>(0),
-			static_cast<MPI_Aint>(2 * sizeof(int))
+			static_cast<MPI_Aint>(0)
 		};
+
+		MPI_Aint lb;
+		ret = MPI_Type_get_extent(InterNodeMessage::MPI_NodeDHTArea, &lb, &displacements[1]);
+		if (ret != MPI_SUCCESS) {
+			MessageBox(NULL, "Error getting extent.", "Error", MB_OK);
+		}
 
 		ret = MPI_Type_create_struct(2, blockSizes, displacements, types, &InterNodeMessage::MPI_NodeTakeoverResponse);
 		if (ret != MPI_SUCCESS) {
@@ -372,7 +378,7 @@ int main(int argc, char* argv[])
 
 				InterNodeMessage::NodeTakeoverResponse nodeTakeoverResponse;
 				memset((void*)&nodeTakeoverResponse, 0, sizeof(InterNodeMessage::NodeTakeoverResponse));
-				MPI_Recv((void*)&nodeTakeoverResponse, 1, InterNodeMessage::MPI_NodeTakeoverResponse, MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_REQUEST, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&nodeTakeoverResponse, 1, InterNodeMessage::MPI_NodeTakeoverResponse, MPI_ANY_SOURCE, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD, &mpiStatus);
 
 				fp << node.LogOutputHeader() << "\tNode takeover response:" << endl
 					<< "\t\tNode num: " << nodeTakeoverResponse.nodeNum << endl
@@ -428,7 +434,7 @@ int main(int argc, char* argv[])
 
 				NotifyRootOfMsg(NodeToNodeMsgTypes::RECEIVING, mpiStatus.MPI_SOURCE, rootRank);
 
-				/*fp << node.LogOutputHeader() << "\tNew neighbor DHT area:" << endl
+				fp << node.LogOutputHeader() << "\tNew neighbor DHT area:" << endl
 					<< "\t\tLeft: " << neighborDHTArea.left << endl
 					<< "\t\tRight: " << neighborDHTArea.right << endl
 					<< "\t\tTop: " << neighborDHTArea.top << endl
@@ -441,7 +447,7 @@ int main(int argc, char* argv[])
 						<< "\t\tRight: " << i->neighborArea.right << endl
 						<< "\t\tTop: " << i->neighborArea.top << endl
 						<< "\t\tBottom: " << i->neighborArea.bottom << endl;
-				}*/
+				}
 
 				newMsg = 0;
 				MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &newMsg, &mpiStatus);

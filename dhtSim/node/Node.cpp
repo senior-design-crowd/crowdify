@@ -2,6 +2,7 @@
 #include <math.h>
 #include <limits>
 #include <vector>
+#include <algorithm>
 #include <chrono>
 #include <string>
 #include <sstream>
@@ -403,16 +404,16 @@ void Node::SendNeighborsDHTUpdate()
 
 	// send each of our neighbors our DHT area and the DHT area and node number of all of our neighbors
 	for (vector<NodeNeighbor>::const_iterator i = m_vNeighbors.begin(); i != m_vNeighbors.end(); ++i, ++neighborUpdateIndex) {
-		//m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": my DHT area" << endl;
-		//m_fp.flush();
+		m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": my DHT area" << endl;
+		m_fp.flush();
 		MPI_Send((void*)&m_dhtArea, 1, InterNodeMessage::MPI_NodeDHTArea, i->nodeNum, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
 
-		//m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": my # neighbors" << endl;
-		//m_fp.flush();
+		m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": my # neighbors" << endl;
+		m_fp.flush();
 		MPI_Send((void*)&numNeighbors, 1, MPI_INT, i->nodeNum, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
 
-		//m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": neighbors" << endl;
-		//m_fp.flush();
+		m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": neighbors" << endl;
+		m_fp.flush();
 
 		MPI_Send((void*)&m_vNeighbors[0], numNeighbors, InterNodeMessage::MPI_NodeNeighbor, i->nodeNum, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
 
@@ -456,12 +457,19 @@ void Node::UpdateNeighbors()
 			deadNeighbor.neighborsAllowingTakeover = vector<bool>(deadNeighbor.neighborNeighbors.size(), false);
 			deadNeighbor.state = DeadNeighbor::INITIAL;
 
+			// make sure it is set that we are allowing ourselves to take over this node
+			for (size_t neighborIndex = 0; neighborIndex < deadNeighbor.neighborNeighbors.size(); ++neighborIndex) {
+				if (deadNeighbor.neighborNeighbors[neighborIndex].nodeNum == m_mpiRank) {
+					deadNeighbor.neighborsAllowingTakeover[neighborIndex] = true;
+				}
+			}
+
 			float totalDHTArea = (m_dhtArea.right - m_dhtArea.left) * (m_dhtArea.bottom - m_dhtArea.top);
 			deadNeighbor.timeUntilTakeover = m_takeoverTimerPerArea * totalDHTArea;
 
 			m_fp << LogOutputHeader() << "Neighbor node #" << deadNeighbor.neighbor.nodeNum << " died." << endl
 				<< "\tHasn't updated us for " << timeSinceUpdate.count() << " ms." << endl
-				<< "\tThis node has DHT area of size " << totalDHTArea
+				<< "\tThis node has DHT area of size " << totalDHTArea << endl
 				<< "\tTaking over node in " << deadNeighbor.timeUntilTakeover.count() << " ms." << endl;
 			
 			m_vDeadNeighbors.push_back(deadNeighbor);
@@ -523,7 +531,7 @@ void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeove
 
 	InterNodeMessage::NodeTakeoverResponse response;
 	memset((void*)&response, 0, sizeof(InterNodeMessage::NodeTakeoverResponse));
-	response.response = InterNodeMessage::NodeTakeoverResponse::NOT_MY_NEIGHBOR;
+	response.nodeNum = nodeTakeoverRequest.nodeNum;
 
 	if (deadNeighborIt == m_vDeadNeighbors.end()) {
 		m_fp << "\t" << nodeTakeoverRequest.nodeNum << " was not detected as a dead neighbor." << endl;
@@ -564,8 +572,17 @@ void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeove
 				deadNeighbor.neighborNeighbors = m_vNeighborsOfNeighbors[vNeighborIt - m_vNeighbors.begin()];
 				deadNeighbor.neighborsAllowingTakeover = vector<bool>(deadNeighbor.neighborNeighbors.size(), false);
 
+				// make sure it is set that we are allowing ourselves to take over this node
+				for (size_t neighborIndex = 0; neighborIndex < deadNeighbor.neighborNeighbors.size(); ++neighborIndex) {
+					if (deadNeighbor.neighborNeighbors[neighborIndex].nodeNum == m_mpiRank) {
+						deadNeighbor.neighborsAllowingTakeover[neighborIndex] = true;
+					}
+				}
+
 				m_vDeadNeighbors.push_back(deadNeighbor);
 				m_vNeighbors.erase(vNeighborIt);
+				m_vNeighborsOfNeighbors.erase(m_vNeighborsOfNeighbors.begin() + neighborIndex);
+				m_neighborTimeSinceLastUpdate.erase(m_neighborTimeSinceLastUpdate.begin() + neighborIndex);
 
 				deadNeighborIt = m_vDeadNeighbors.end() - 1;
 			} else {
@@ -622,9 +639,6 @@ void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeove
 
 		// they have a smaller or equal area, so let them takeover the node
 		response.response = InterNodeMessage::NodeTakeoverResponse::CAN_TAKEOVER;
-
-		m_fp << "\tSending response value: " << response.response << endl
-			<< "\tSizeof response in bytes: " << sizeof(InterNodeMessage::NodeTakeoverResponse) / sizeof(char) << endl;
 		MPI_Send((void*)&response, 1, InterNodeMessage::MPI_NodeTakeoverResponse, srcNode, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD);
 	}
 }
@@ -664,7 +678,13 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 			
 			if (neighborIt != deadNeighborIt->neighborNeighbors.end()) {
 				deadNeighborIt->neighborsAllowingTakeover[neighborIndex] = true;
+			} else {
+				m_fp << "\tUnable to find node " << srcNode << " in dead node's neighbor list." << endl;
 			}
+
+			int numNeigborsAllowing = count(deadNeighborIt->neighborsAllowingTakeover.begin(), deadNeighborIt->neighborsAllowingTakeover.end(), true);
+
+			m_fp << "\t" << numNeigborsAllowing << " out of " << deadNeighborIt->neighborsAllowingTakeover.size() << " neighbors allowing takeover." << endl;
 
 			// if all the neighbors are allowing takeover now, then notify them all that we're
 			// taking over the node's DHT area and take it over
@@ -686,19 +706,31 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 					<< "\t\tLeft: " << deadNeighborIt->neighbor.neighborArea.left << endl
 					<< "\t\tRight: " << deadNeighborIt->neighbor.neighborArea.right << endl
 					<< "\t\tTop: " << deadNeighborIt->neighbor.neighborArea.top << endl
-					<< "\t\tBottom: " << deadNeighborIt->neighbor.neighborArea.bottom << endl;
+					<< "\t\tBottom: " << deadNeighborIt->neighbor.neighborArea.bottom << endl << endl;
 
 				// add all of the node's neighbors as our neighbors.
 				// they'll be pruned after we takeover the DHT area
 				// in TakeoverDHTArea()
 				for (vector<NodeNeighbor>::const_iterator j = deadNeighborIt->neighborNeighbors.begin(); j != deadNeighborIt->neighborNeighbors.end(); ++j) {
 					// make sure we don't add duplicate neighbors
-					if (find(m_vNeighbors.begin(), m_vNeighbors.end(), *j) == m_vNeighbors.end()) {
+					if (find(m_vNeighbors.begin(), m_vNeighbors.end(), *j) == m_vNeighbors.end() && j->nodeNum != m_mpiRank) {
 						m_vNeighbors.push_back(*j);
+
+						m_fp << LogOutputHeader() << "\t\tAcquired new neighbor:" << endl
+							<< "\t\t\t\tNode num: " << j->nodeNum << endl
+							<< "\t\t\t\tNode DHT Area: " << endl
+							<< "\t\t\t\t\tLeft: " << j->neighborArea.left << endl
+							<< "\t\t\t\t\tRight: " << j->neighborArea.right << endl
+							<< "\t\t\t\t\tTop: " << j->neighborArea.top << endl
+							<< "\t\t\t\t\tBottom: " << j->neighborArea.bottom << endl;
 					}
 				}
 
+				m_fp << LogOutputHeader() << "\t\tCoalescing my node and dead node's DHT area." << endl;
 				TakeoverDHTArea(deadNeighborIt->neighbor.neighborArea);
+
+				m_fp << LogOutputHeader() << "\t\tErasing dead node from dead neighbors list." << endl;
+				m_vDeadNeighbors.erase(deadNeighborIt);
 			}
 		} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::NODE_STILL_ALIVE) {
 			m_fp << "\tNode " << deadNeighborIt->neighbor.nodeNum << " is still alive, adding back to alive neighbors." << endl;
@@ -763,6 +795,8 @@ void Node::TakeoverDHTArea(NodeDHTArea dhtArea)
 		<< "\t\tTop: " << m_dhtArea.top << endl
 		<< "\t\tBottom: " << m_dhtArea.bottom << endl;
 
+	m_fp.flush();
+
 	PruneNeighbors();
 	SendNeighborsDHTUpdate();
 }
@@ -787,13 +821,13 @@ bool Node::AreNeighbors(const NodeDHTArea& a, const NodeDHTArea& b)
 		||	(a.top < b.bottom && b.bottom < a.bottom)
 		||	(a.top == b.top && a.bottom == b.bottom);
 
-	//m_fp << LogOutputHeader();
+	m_fp << LogOutputHeader();
 
 	if ((horzEdgeAbutted && vertEdgeOverlapping) || (vertEdgeAbutted && horzEdgeOverlapping)) {
-		//m_fp << "\t\tEdge overlapped and abutted." << endl;
+		m_fp << "\t\tEdge overlapped and abutted." << endl;
 		return true;
 	} else {
-		/*if (horzEdgeAbutted) {
+		if (horzEdgeAbutted) {
 			m_fp << "\t\tHorizontal edge abutted but no vertical edge overlapping." << endl;
 		} else if (vertEdgeAbutted) {
 			m_fp << "\t\tVertical edge abutted but no horizontal edge overlapping." << endl;
@@ -803,7 +837,7 @@ bool Node::AreNeighbors(const NodeDHTArea& a, const NodeDHTArea& b)
 			m_fp << "\t\tVertical edge overlapping but no horizontal edge abutting." << endl;
 		} else {
 			m_fp << "\t\tEdges not abutting or overlapping on any dimension." << endl;
-		}*/
+		}
 
 		return false;
 	}
@@ -813,27 +847,35 @@ void Node::PruneNeighbors()
 {
 	// remove all the neighbors we no longer
 	// share an edge with (i.e. those that are no longer neighbors)
-	//m_fp << LogOutputHeader() << "\tPruning my neighbors:" << endl;
+	m_fp << LogOutputHeader() << "\tPruning my neighbors:" << endl;
 	for (size_t i = 0; i < m_vNeighbors.size();) {
 
-		/*m_fp << LogOutputHeader() << "\t\tNode #: " << m_vNeighbors[i].nodeNum << endl
+		m_fp << LogOutputHeader() << "\t\tNode #: " << m_vNeighbors[i].nodeNum << endl
 			<< "\t\t\tLeft: " << m_vNeighbors[i].neighborArea.left << endl
 			<< "\t\t\tRight: " << m_vNeighbors[i].neighborArea.right << endl
 			<< "\t\t\tTop: " << m_vNeighbors[i].neighborArea.top << endl
 			<< "\t\t\tBottom: " << m_vNeighbors[i].neighborArea.bottom << endl
-			<< endl;*/
+			<< endl;
 
 		bool isMyNeighbor = AreNeighbors(m_dhtArea, m_vNeighbors[i].neighborArea);
 
 		if(isMyNeighbor) {
-			//m_fp << LogOutputHeader() << "Is neighbor. Keeping it." << endl;
+			m_fp << LogOutputHeader() << "Is neighbor. Keeping it." << endl;
 			++i;
 		} else {
-			//m_fp << LogOutputHeader() << "Is not neighbor. Removing it." << endl;
+			m_fp << LogOutputHeader() << "Is not neighbor. Removing it." << endl;
+			m_fp.flush();
 			m_vNeighbors.erase(m_vNeighbors.begin() + i);
+			m_fp << "1 ";
+			m_fp.flush();
 			m_neighborTimeSinceLastUpdate.erase(m_neighborTimeSinceLastUpdate.begin() + i);
+			m_fp << "2 ";
+			m_fp.flush();
 			m_vNeighborsOfNeighbors.erase(m_vNeighborsOfNeighbors.begin() + i);
+			m_fp << "3" << endl;
 		}
+
+		m_fp.flush();
 	}
 
 	SendRootNeighborsUpdate();

@@ -9,5 +9,5 @@ void NotifyRootOfMsg(NodeToNodeMsgTypes::NodeToNodeMsgType msgType, int otherNod
 	nodeToNodeMsg.msgType = msgType;
 	nodeToNodeMsg.otherNode = otherNode;
 
-	MPI_Send((void*)&nodeToNodeMsg, sizeof(NodeToRootMessage::NodeToNodeMsg) / sizeof(int), MPI_INT, rootRank, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD);
+	MPI_Send((void*)&nodeToNodeMsg, 1, NodeToRootMessage::MPI_NodeToNodeMsg, rootRank, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD);
 }

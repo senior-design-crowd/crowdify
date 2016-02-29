@@ -22,6 +22,92 @@ using namespace std;
 
 typedef chrono::high_resolution_clock timer;
 
+namespace NodeToRootMessage {
+	MPI_Datatype MPI_NodeDHTArea;
+	MPI_Datatype MPI_NodeToNodeMsg;
+	MPI_Datatype MPI_NodeNeighborUpdate;
+}
+
+bool InitMPITypes()
+{
+	int ret = -1;
+
+	// MPI_NodeDHTArea
+	{
+		/*
+		typedef struct _NodeDHTArea {
+			float left, right, top, bottom;
+		} NodeDHTArea;
+		*/
+
+		MPI_Datatype types[] = { MPI_FLOAT };
+		int blockSizes[] = { 4 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeDHTArea);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+
+		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeDHTArea);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+	}
+
+	// MPI_NodeToNodeMsg
+	{
+		/*typedef struct {
+			int										otherNode;
+			NodeToNodeMsgTypes::NodeToNodeMsgType	msgType;
+		} NodeToNodeMsg;*/
+
+		MPI_Datatype types[] = { MPI_INT };
+		int blockSizes[] = { 2 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeToNodeMsg);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+
+		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeToNodeMsg);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+	}
+
+	// MPI_NodeNeighborUpdate
+	{
+		/*typedef struct {
+			int neighbors[10];
+			int numNeighbors;
+		} NodeNeighborUpdate;*/
+
+		MPI_Datatype types[] = { MPI_INT };
+		int blockSizes[] = { 11 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeNeighborUpdate);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+
+		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeNeighborUpdate);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 int main(int argc, char* argv[])
 {
 	// initialize MPI
@@ -35,6 +121,8 @@ int main(int argc, char* argv[])
 			this_thread::sleep_for(chrono::milliseconds(200));
 		}
 	}
+
+	InitMPITypes();
 
 	// send all the other nodes my rank
 	for (int i = 0; i < mpiNumNodes; ++i) {
@@ -245,7 +333,7 @@ int main(int argc, char* argv[])
 
 				if(probeFlag) {
 					NodeDHTArea newArea;
-					MPI_Recv((void*)&newArea, sizeof(NodeDHTArea) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+					MPI_Recv((void*)&newArea, 1, NodeToRootMessage::MPI_NodeDHTArea, MPI_ANY_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 
 					fp << "Got DHT_AREA_UPDATE from " << mpiStatus.MPI_SOURCE << ":" << endl
 						<< "\tLeft: " << newArea.left << endl
@@ -265,7 +353,7 @@ int main(int argc, char* argv[])
 			//while (probeFlag) {
 			if (probeFlag) {
 				NodeToRootMessage::NodeToNodeMsg msg;
-				MPI_Recv((void*)&msg, sizeof(NodeToRootMessage::NodeToNodeMsg) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&msg, 1, NodeToRootMessage::MPI_NodeToNodeMsg, MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &mpiStatus);
 
 				if (msg.msgType == NodeToNodeMsgTypes::SENDING) {
 					fp << "Got message from " << mpiStatus.MPI_SOURCE << " to " << msg.otherNode << endl;
@@ -315,7 +403,7 @@ int main(int argc, char* argv[])
 
 			if (probeFlag) {
 				NodeToRootMessage::NodeNeighborUpdate neighborUpdate;
-				MPI_Recv((void*)&neighborUpdate, sizeof(NodeToRootMessage::NodeNeighborUpdate)/sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&neighborUpdate, 1, NodeToRootMessage::MPI_NodeNeighborUpdate, MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 				
 				// update node edges
 				nodeEdges[mpiStatus.MPI_SOURCE].clear();

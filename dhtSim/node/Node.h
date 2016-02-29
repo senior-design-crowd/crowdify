@@ -36,6 +36,7 @@ public:
 	const std::vector<NodeNeighbor>&	GetNeighbors();
 	int									GetNearestNeighbor(float x, float y);
 	const int							GetNextSplitAxis();
+	void								ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverNotification);
 	void								ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverRequest);
 	void								ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeoverResponse& nodeTakeoverResponse);
 

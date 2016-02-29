@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -404,15 +405,15 @@ void Node::SendNeighborsDHTUpdate()
 
 	// send each of our neighbors our DHT area and the DHT area and node number of all of our neighbors
 	for (vector<NodeNeighbor>::const_iterator i = m_vNeighbors.begin(); i != m_vNeighbors.end(); ++i, ++neighborUpdateIndex) {
-		m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": my DHT area" << endl;
+		m_fp << LogOutputHeader() << "\tSending neighbor Node #" << i->nodeNum << ": my DHT area" << endl;
 		m_fp.flush();
 		MPI_Send((void*)&m_dhtArea, 1, InterNodeMessage::MPI_NodeDHTArea, i->nodeNum, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
 
-		m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": my # neighbors" << endl;
+		m_fp << LogOutputHeader() << "\tSending neighbor Node #" << i->nodeNum << ": my # neighbors" << endl;
 		m_fp.flush();
 		MPI_Send((void*)&numNeighbors, 1, MPI_INT, i->nodeNum, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
 
-		m_fp << LogOutputHeader() << "\tSending neighbor #" << neighborUpdateIndex << ": neighbors" << endl;
+		m_fp << LogOutputHeader() << "\tSending neighbor Node #" << i->nodeNum << ": neighbors" << endl;
 		m_fp.flush();
 
 		MPI_Send((void*)&m_vNeighbors[0], numNeighbors, InterNodeMessage::MPI_NodeNeighbor, i->nodeNum, InterNodeMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
@@ -514,6 +515,42 @@ void Node::UpdateNeighbors()
 
 				m_vDeadNeighbors[i].state = DeadNeighbor::TIMER_OFF;
 			}
+		}
+	}
+}
+
+void Node::ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverNotification)
+{
+	vector<DeadNeighbor>::iterator deadNeighborIt = m_vDeadNeighbors.begin();
+	for (; deadNeighborIt != m_vDeadNeighbors.end(); ++deadNeighborIt) {
+		if (deadNeighborIt->neighbor.nodeNum == nodeTakeoverNotification.nodeNum) {
+			break;
+		}
+	}
+
+	m_fp << LogOutputHeader() << "Resolving node takeover notification from " << srcNode << " for " << nodeTakeoverNotification.nodeNum << endl;
+
+	if (deadNeighborIt != m_vDeadNeighbors.end()) {
+		m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " is in our list of dead nodes, removing it." << endl;
+		m_vDeadNeighbors.erase(deadNeighborIt);
+	} else {
+		m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " isn't in our list of dead nodes." << endl;
+
+		size_t neighborNum = 0;
+		vector<NodeNeighbor>::iterator neighborIt = m_vNeighbors.begin();
+		for (; neighborIt != m_vNeighbors.end(); ++neighborIt, ++neighborNum) {
+			if (neighborIt->nodeNum == nodeTakeoverNotification.nodeNum) {
+				break;
+			}
+		}
+
+		if (neighborIt != m_vNeighbors.end()) {
+			m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " is in our list of neighbor nodes, removing it." << endl;
+			m_vNeighbors.erase(neighborIt);
+			m_vNeighborsOfNeighbors.erase(m_vNeighborsOfNeighbors.begin() + neighborNum);
+			m_neighborTimeSinceLastUpdate.erase(m_neighborTimeSinceLastUpdate.begin() + neighborNum);
+		} else {
+			m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " isn't in our list of neighbor nodes, ignoring message." << endl;
 		}
 	}
 }
@@ -634,11 +671,22 @@ void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeove
 					MPI_Send((void*)&newTakeoverReq, 1, InterNodeMessage::MPI_NodeTakeoverInfo, neighbor->nodeNum, InterNodeMessageTags::NODE_TAKEOVER_REQUEST, MPI_COMM_WORLD);
 				}
 		}
-	} else {
-		m_fp << "\tNode " << srcNode << " has a lesser or equal DHT area than us, responding to them with CAN_TAKEOVER message." << endl;
+	} else if (m_mpiRank < srcNode && myDHTArea == nodeDHTArea) {
+		m_fp << "\tNode " << srcNode << " has an equal DHT area to us but a higher node number, responding to them with LOWER_NODE_ADDRESS message." << endl;
+
+		// they have a smaller or equal area, so let them takeover the node
+		response.response = InterNodeMessage::NodeTakeoverResponse::LOWER_NODE_ADDRESS;
+		MPI_Send((void*)&response, 1, InterNodeMessage::MPI_NodeTakeoverResponse, srcNode, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD);
+	} else if (myDHTArea > nodeDHTArea || (myDHTArea == nodeDHTArea && m_mpiRank > srcNode)) {
+		m_fp << "\tNode " << srcNode << " has a smaller DHT area or equal DHT area and lower node address than us, responding to them with CAN_TAKEOVER message." << endl;
 
 		// they have a smaller or equal area, so let them takeover the node
 		response.response = InterNodeMessage::NodeTakeoverResponse::CAN_TAKEOVER;
+		MPI_Send((void*)&response, 1, InterNodeMessage::MPI_NodeTakeoverResponse, srcNode, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD);
+	} else {
+		m_fp << "\tReached error state with node takeover, responding with ERROR message." << endl;
+
+		response.response = InterNodeMessage::NodeTakeoverResponse::TAKEOVER_ERROR;
 		MPI_Send((void*)&response, 1, InterNodeMessage::MPI_NodeTakeoverResponse, srcNode, InterNodeMessageTags::NODE_TAKEOVER_RESPONSE, MPI_COMM_WORLD);
 	}
 }
@@ -669,8 +717,13 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 					<< " treating it as a CAN_TAKEOVER message." << endl;
 				nodeTakeoverResponse.response = InterNodeMessage::NodeTakeoverResponse::CAN_TAKEOVER;
 			} else {
-				m_fp << "\tUnknown neighbor " << srcNode << " claims to not be node " << deadNeighborIt->neighbor.nodeNum << "'s neighbor, ignoring." << endl;
+				m_fp << "\tUnknown node " << srcNode << " claims to not be node " << deadNeighborIt->neighbor.nodeNum << "'s neighbor, ignoring." << endl;
 			}
+		}
+
+		if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::TAKEOVER_ERROR) {
+			m_fp << "\tNode " << srcNode << " gave ERROR NodeTakeoverResponse, treating it as a CAN_TAKEOVER message." << endl;
+			nodeTakeoverResponse.response = InterNodeMessage::NodeTakeoverResponse::CAN_TAKEOVER;
 		}
 
 		if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::CAN_TAKEOVER) {
@@ -726,11 +779,17 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 					}
 				}
 
-				m_fp << LogOutputHeader() << "\t\tCoalescing my node and dead node's DHT area." << endl;
-				TakeoverDHTArea(deadNeighborIt->neighbor.neighborArea);
+				try
+				{
+					m_fp << LogOutputHeader() << "\t\tCoalescing my node and dead node's DHT area." << endl;
+					TakeoverDHTArea(deadNeighborIt->neighbor.neighborArea);
 
-				m_fp << LogOutputHeader() << "\t\tErasing dead node from dead neighbors list." << endl;
-				m_vDeadNeighbors.erase(deadNeighborIt);
+					m_fp << LogOutputHeader() << "\t\tErasing dead node from dead neighbors list." << endl;
+					m_vDeadNeighbors.erase(deadNeighborIt);
+				}
+				catch (const out_of_range& oor) {
+					m_fp << "Out of range error: " << oor.what() << endl;
+				}
 			}
 		} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::NODE_STILL_ALIVE) {
 			m_fp << "\tNode " << deadNeighborIt->neighbor.nodeNum << " is still alive, adding back to alive neighbors." << endl;
@@ -743,9 +802,9 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 			
 			// then remove it from this vector as its no longer considered dead.
 			m_vDeadNeighbors.erase(deadNeighborIt);
-		} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::SMALLER_AREA) {
+		} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::SMALLER_AREA || nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::LOWER_NODE_ADDRESS) {
 			// not sure how to response to this yet except log it
-			m_fp << "\tNode " << srcNode << " claims to have a smaller DHT area:" << endl
+			m_fp << "\tNode " << srcNode << " claims to have a smaller DHT area or equal DHT area and lower node address:" << endl
 				<< "\t\tLeft: " << neighborIt->neighborArea.left << endl
 				<< "\t\tRight: " << neighborIt->neighborArea.right << endl
 				<< "\t\tTop: " << neighborIt->neighborArea.top << endl
@@ -900,7 +959,7 @@ void Node::SendRootNeighborsUpdate()
 	}
 
 	// update the root node with our new neighbors
-	MPI_Send((void*)&neighborUpdate, sizeof(NodeToRootMessage::NodeNeighborUpdate) / sizeof(int), MPI_INT, m_rootRank, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
+	MPI_Send((void*)&neighborUpdate, 1, NodeToRootMessage::MPI_NodeNeighborUpdate, m_rootRank, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD);
 }
 
 const vector<NodeNeighbor>&	Node::GetNeighbors()

@@ -34,6 +34,10 @@ namespace NodeToRootMessage
 		int neighbors[10];
 		int numNeighbors;
 	} NodeNeighborUpdate;
+
+	extern MPI_Datatype MPI_NodeDHTArea;
+	extern MPI_Datatype MPI_NodeToNodeMsg;
+	extern MPI_Datatype MPI_NodeNeighborUpdate;
 }
 
 namespace NodeAliveStates

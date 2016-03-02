@@ -1,7 +1,37 @@
 #ifndef __NODE_MSG_TAGS__
 #define __NODE_MSG_TAGS__
 
+#include <string>
+#include <stdio.h>
+#include <string.h>
+
 #include "header.h"
+
+#define OutputVecOperation(isBefore)
+//#define OutputVecOperation(isBefore) do { \
+//std::string str = __FILE__; \
+//int			lineNum = __LINE__; \
+//bool		before = isBefore; \
+//\
+//MPI_Send((void*)str.c_str(), str.length(), MPI_CHAR, m_rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD); \
+//MPI_Send((void*)&lineNum, 1, MPI_INT, m_rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD); \
+//MPI_Send((void*)&before, sizeof(bool), MPI_CHAR, m_rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD); \
+//} while (0);
+
+#define OutputDebugMsg(formatStr, ...)
+//#define OutputDebugMsg(formatStr, ...) do { \
+//if(m_bSeenDeath) {\
+//	char tmpBuf[256] = {0}; \
+//	sprintf(tmpBuf, formatStr, __VA_ARGS__); \
+//	std::string str = __FILE__; \
+//	int			lineNum = __LINE__; \
+//	\
+//	MPI_Send((void*)str.c_str(), str.length(), MPI_CHAR, m_rootRank, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD); \
+//	str = tmpBuf; \
+//	MPI_Send((void*)str.c_str(), str.length(), MPI_CHAR, m_rootRank, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD); \
+//	MPI_Send((void*)&lineNum, 1, MPI_INT, m_rootRank, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD); \
+//}\
+//} while (0);
 
 namespace NodeToRootMessageTags
 {
@@ -11,6 +41,8 @@ namespace NodeToRootMessageTags
 		DHT_AREA_UPDATE,
 		NEIGHBOR_UPDATE,
 		NODE_TO_NODE_MSG,
+		VECTOR_OPERATION,
+		DEBUG_MSG,
 		NUM_NODE_MSG_TAGS
 	};
 };
@@ -31,11 +63,14 @@ namespace NodeToRootMessage
 		int										otherNode;
 		NodeToNodeMsgTypes::NodeToNodeMsgType	msgType;
 	} NodeToNodeMsg;
-	
+
 	typedef struct {
 		int neighbors[10];
 		int numNeighbors;
 	} NodeNeighborUpdate;
+
+	extern MPI_Datatype MPI_NodeToNodeMsg;
+	extern MPI_Datatype MPI_NodeNeighborUpdate;
 }
 
 namespace NodeAliveStates
@@ -102,17 +137,17 @@ namespace InterNodeMessage
 
 	typedef struct
 	{
+		NodeDHTArea		myDHTArea;
 		int				nodeNum;
 
 		enum ResponseType : unsigned int {
 			CAN_TAKEOVER = 1,
 			SMALLER_AREA,
+			LOWER_NODE_ADDRESS,
 			NOT_MY_NEIGHBOR,
-			NODE_STILL_ALIVE
-		};
-
-		int				response;
-		NodeDHTArea		myDHTArea;
+			NODE_STILL_ALIVE,
+			TAKEOVER_ERROR
+		} response;
 	} NodeTakeoverResponse;
 
 	extern MPI_Datatype MPI_NodeTakeoverResponse;

@@ -205,8 +205,7 @@ int main(int argc, char* argv[])
 
 		timer::time_point lastNodeAliveStateChange = timer::now();
 		const chrono::milliseconds milliUntilNextNodeBroughtAlive = chrono::seconds(1);
-		//const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(120);
-		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(3);
+		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(7);
 
 		int nodeChangingStage = 0;
 
@@ -243,7 +242,6 @@ int main(int argc, char* argv[])
 
 					nodeStates[nodeToChange].isAlive = true;
 				} else if (nodeChangingStage == 1) {
-					nodeToChange = 0;
 					while (nodeToChange == mpiRank) {
 						nodeToChange = randomNodeGenerator(randGenerator);
 					}
@@ -270,7 +268,7 @@ int main(int argc, char* argv[])
 						nodeChangingStage = 1;
 					}
 
-					if (numAliveNodes == 1) {
+					if (numAliveNodes < 2) {
 						newAliveState = NodeAliveStates::ONLY_NODE_IN_NETWORK;
 						fp << "\tNode is only alive node in network";
 					} else {
@@ -294,9 +292,7 @@ int main(int argc, char* argv[])
 						nodeChangingStage = 0;
 					}
 
-
-					// TEMPORARY FIX TO ONLY ALLOW ONE NODE TO BE KILLED AT A TIME
-					nodeChangingStage = 2;
+					dhtChanged = true;
 				}
 
 				if (newAliveState == NodeAliveStates::ALIVE) {
@@ -397,6 +393,62 @@ int main(int argc, char* argv[])
 						graphStateChanged = true;
 					}
 				}
+			}
+
+			probeFlag = 0;
+			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+			while (probeFlag) {
+				int stringLen = 0;
+				MPI_Get_count(&mpiStatus, MPI_CHAR, &stringLen);
+
+				string	filename(stringLen, ' ');
+				int		lineNum;
+				bool	before;
+
+				MPI_Recv((void*)filename.c_str(), stringLen, MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&lineNum, 1, MPI_INT, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&before, sizeof(bool), MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &mpiStatus);
+
+				fp << "Vector operation at node " << mpiStatus.MPI_SOURCE << ":" << endl
+					<< "\tFilename: " << filename << endl
+					<< "\tLine: " << lineNum << endl
+					<< "\tBefore: " << before << endl
+					<< endl;
+
+				probeFlag = 0;
+				MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+			}
+
+			probeFlag = 0;
+			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+			while (probeFlag) {
+				int stringLen = 0;
+				MPI_Get_count(&mpiStatus, MPI_CHAR, &stringLen);
+
+				string	filename(stringLen, ' ');
+				MPI_Recv((void*)filename.c_str(), stringLen, MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				MPI_Iprobe(mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+				MPI_Get_count(&mpiStatus, MPI_CHAR, &stringLen);
+				string	msg(stringLen, ' ');
+				MPI_Recv((void*)msg.c_str(), stringLen, MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				int		lineNum;
+				MPI_Recv((void*)&lineNum, 1, MPI_INT, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				if(nodeChangingStage != 0) {
+					fp << "Debug message at node " << mpiStatus.MPI_SOURCE << ":" << endl
+						<< "\tFilename: " << filename << endl
+						<< "\tLine: " << lineNum << endl
+						<< "\tMessage: " << msg << endl
+						<< endl;
+				}
+
+				probeFlag = 0;
+				MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 			}
 
 			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &probeFlag, &mpiStatus);

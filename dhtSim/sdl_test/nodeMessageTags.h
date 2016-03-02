@@ -9,6 +9,8 @@ namespace NodeToRootMessageTags
 		DHT_AREA_UPDATE,
 		NEIGHBOR_UPDATE,
 		NODE_TO_NODE_MSG,
+		VECTOR_OPERATION,
+		DEBUG_MSG,
 		NUM_NODE_MSG_TAGS
 	};
 };

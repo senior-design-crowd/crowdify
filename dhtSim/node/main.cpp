@@ -305,10 +305,24 @@ bool InitMPITypes()
 	return true;
 }
 
+int mpiRank, mpiSize, rootRank;
+
+int YourReportHook(int reportType, char *message, int *returnValue)
+{
+	std::string str = message;
+	int			lineNum = -5;
+	bool		before = false;
+	
+	MPI_Send((void*)str.c_str(), str.length(), MPI_CHAR, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
+	MPI_Send((void*)&lineNum, 1, MPI_INT, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
+	MPI_Send((void*)&before, sizeof(bool), MPI_CHAR, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
+
+	return 0;
+}
+
 int main(int argc, char* argv[])
 {
 	bool alive = false;
-	int mpiRank, mpiSize;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -321,8 +335,9 @@ int main(int argc, char* argv[])
 
 	InitMPITypes();
 
+	_CrtSetReportHook(YourReportHook);
+
 	MPI_Status	mpiStatus;
-	int			rootRank;
 	MPI_Recv((void*)&rootRank, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus);
 
 	char filename[128];

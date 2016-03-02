@@ -51,8 +51,10 @@ Node::Node(int mpiRank, int rootRank, ofstream* fp)
 	// this constant by our current DHT area and wait that
 	// amount of time until sending the takeover message
 	m_takeoverTimerPerArea(std::chrono::seconds(2)),
-	m_edgeAbutEpsilon(1e-4f)
-{}
+	m_edgeAbutEpsilon(1e-4f),
+	m_bSeenDeath(false)
+{
+}
 
 const NodeDHTArea& Node::GetDHTArea()
 {
@@ -354,6 +356,7 @@ int Node::GetNearestNeighbor(float x, float y)
 
 bool Node::UpdateNeighborDHTArea(int nodeNum, const NodeDHTArea& dhtArea, const vector<NodeNeighbor>& neighborsOfNeighbor)
 {
+	OutputDebugMsg("In UpdateNeighborDHTArea");
 	vector<NodeNeighbor>::iterator i = m_vNeighbors.begin();
 
 	// is this a new neighbor or a current one?
@@ -383,11 +386,15 @@ bool Node::UpdateNeighborDHTArea(int nodeNum, const NodeDHTArea& dhtArea, const 
 		SendRootNeighborsUpdate();
 	}
 
+	OutputDebugMsg("Reached end of UpdateNeighborDHTArea");
+
 	return true;
 }
 
 void Node::SendNeighborsDHTUpdate()
 {
+	OutputDebugMsg("In SendNeighborsDHTUpdate");
+
 	int neighborUpdateIndex = 0;
 	int numNeighbors = m_vNeighbors.size();
 
@@ -423,10 +430,13 @@ void Node::SendNeighborsDHTUpdate()
 
 	m_fp << LogOutputHeader() << "\tDone." << endl;
 	m_fp.flush();
+
+	OutputDebugMsg("Reached end of SendNeighborsDHTUpdate");
 }
 
 void Node::UpdateNeighbors()
 {
+	OutputDebugMsg("In UpdateNeighbors");
 	chrono::high_resolution_clock::time_point timeNow = chrono::high_resolution_clock::now();
 
 	// check if its time to update our neighbors again
@@ -440,14 +450,17 @@ void Node::UpdateNeighbors()
 
 	for (size_t neighborNum = 0; neighborNum < m_vNeighbors.size(); ++neighborNum) {
 		vector<chrono::high_resolution_clock::time_point>::const_iterator timerIt = m_neighborTimeSinceLastUpdate.begin() + neighborNum;
-
+		OutputDebugMsg("timerIt constructed");
 		timeNow = chrono::high_resolution_clock::now();
 
 		// if we haven't received a neighbor update within a certain amount of time from one
 		// of our neighbors, its considered offline and the DHT area takeover process begins
 		chrono::milliseconds timeSinceUpdate = chrono::duration_cast<chrono::milliseconds>(timeNow - *timerIt);
+		OutputDebugMsg("timeSinceUpdate constructed");
 
 		if (timeSinceUpdate >= m_timeUntilNeighborConsideredOffline) {
+			m_bSeenDeath = true;
+
 			vector<NodeNeighbor>::const_iterator nodeIt = m_vNeighbors.begin() + neighborNum;
 			vector<vector<NodeNeighbor>>::const_iterator nodeNeighborsIt = m_vNeighborsOfNeighbors.begin() + neighborNum;
 
@@ -457,6 +470,8 @@ void Node::UpdateNeighbors()
 			deadNeighbor.neighborNeighbors = *nodeNeighborsIt;
 			deadNeighbor.neighborsAllowingTakeover = vector<bool>(deadNeighbor.neighborNeighbors.size(), false);
 			deadNeighbor.state = DeadNeighbor::INITIAL;
+
+			OutputDebugMsg("deadNeighbor created");
 
 			// make sure it is set that we are allowing ourselves to take over this node
 			for (size_t neighborIndex = 0; neighborIndex < deadNeighbor.neighborNeighbors.size(); ++neighborIndex) {
@@ -473,17 +488,25 @@ void Node::UpdateNeighbors()
 				<< "\tThis node has DHT area of size " << totalDHTArea << endl
 				<< "\tTaking over node in " << deadNeighbor.timeUntilTakeover.count() << " ms." << endl;
 			
+			OutputVecOperation(true);
 			m_vDeadNeighbors.push_back(deadNeighbor);
+			OutputVecOperation(true);
 			m_vNeighbors.erase(nodeIt);
+			OutputVecOperation(true);
 			m_vNeighborsOfNeighbors.erase(nodeNeighborsIt);
+			OutputVecOperation(true);
 			m_neighborTimeSinceLastUpdate.erase(timerIt);
+			OutputVecOperation(false);
 		}
 	}
+
+	OutputDebugMsg("Past second block");
 
 	// check if the takeover timer for any of our dead neighbors
 	// has hit their limit yet, and if so, begin the takeover process
 	for (size_t i = 0; i < m_vDeadNeighbors.size(); ++i) {
 		if(m_vDeadNeighbors[i].state == DeadNeighbor::INITIAL) {
+			m_bSeenDeath = true;
 			chrono::milliseconds timeSinceDeath = chrono::duration_cast<chrono::milliseconds>(timeNow - m_vDeadNeighbors[i].timeOfDeath);
 
 			if (timeSinceDeath >= m_vDeadNeighbors[i].timeUntilTakeover) {
@@ -517,10 +540,13 @@ void Node::UpdateNeighbors()
 			}
 		}
 	}
+
+	OutputDebugMsg("Reached end of UpdateNeighbors");
 }
 
 void Node::ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverNotification)
 {
+	m_bSeenDeath = true;
 	vector<DeadNeighbor>::iterator deadNeighborIt = m_vDeadNeighbors.begin();
 	for (; deadNeighborIt != m_vDeadNeighbors.end(); ++deadNeighborIt) {
 		if (deadNeighborIt->neighbor.nodeNum == nodeTakeoverNotification.nodeNum) {
@@ -532,7 +558,9 @@ void Node::ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTa
 
 	if (deadNeighborIt != m_vDeadNeighbors.end()) {
 		m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " is in our list of dead nodes, removing it." << endl;
+		OutputVecOperation(true);
 		m_vDeadNeighbors.erase(deadNeighborIt);
+		OutputVecOperation(false);
 	} else {
 		m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " isn't in our list of dead nodes." << endl;
 
@@ -546,9 +574,13 @@ void Node::ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTa
 
 		if (neighborIt != m_vNeighbors.end()) {
 			m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " is in our list of neighbor nodes, removing it." << endl;
+			OutputVecOperation(true);
 			m_vNeighbors.erase(neighborIt);
+			OutputVecOperation(true);
 			m_vNeighborsOfNeighbors.erase(m_vNeighborsOfNeighbors.begin() + neighborNum);
+			OutputVecOperation(true);
 			m_neighborTimeSinceLastUpdate.erase(m_neighborTimeSinceLastUpdate.begin() + neighborNum);
+			OutputVecOperation(false);
 		} else {
 			m_fp << "\tNode " << nodeTakeoverNotification.nodeNum << " isn't in our list of neighbor nodes, ignoring message." << endl;
 		}
@@ -557,6 +589,7 @@ void Node::ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTa
 
 void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverRequest)
 {
+	m_bSeenDeath = true;
 	vector<DeadNeighbor>::iterator deadNeighborIt = m_vDeadNeighbors.begin();
 	for (; deadNeighborIt != m_vDeadNeighbors.end(); ++deadNeighborIt) {
 		if (deadNeighborIt->neighbor.nodeNum == nodeTakeoverRequest.nodeNum) {
@@ -616,12 +649,19 @@ void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeove
 					}
 				}
 
+				OutputVecOperation(true);
 				m_vDeadNeighbors.push_back(deadNeighbor);
+				OutputVecOperation(true);
 				m_vNeighbors.erase(vNeighborIt);
+				OutputVecOperation(true);
 				m_vNeighborsOfNeighbors.erase(m_vNeighborsOfNeighbors.begin() + neighborIndex);
+				OutputVecOperation(true);
 				m_neighborTimeSinceLastUpdate.erase(m_neighborTimeSinceLastUpdate.begin() + neighborIndex);
+				OutputVecOperation(false);
 
+				OutputVecOperation(true);
 				deadNeighborIt = m_vDeadNeighbors.end() - 1;
+				OutputVecOperation(false);
 			} else {
 				m_fp << "\tNode " << nodeTakeoverRequest.nodeNum << " didn't hit timeout." << endl
 					<< "\tInforming node " << srcNode << " that node " << nodeTakeoverRequest.nodeNum << " is still alive." << endl;
@@ -693,6 +733,7 @@ void Node::ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeove
 
 void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeoverResponse& nodeTakeoverResponse)
 {
+	m_bSeenDeath = true;
 	vector<DeadNeighbor>::iterator deadNeighborIt = m_vDeadNeighbors.begin();
 	for (; deadNeighborIt != m_vDeadNeighbors.end(); ++deadNeighborIt) {
 		if (deadNeighborIt->neighbor.nodeNum == nodeTakeoverResponse.nodeNum) {
@@ -768,6 +809,8 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 					// make sure we don't add duplicate neighbors
 					if (find(m_vNeighbors.begin(), m_vNeighbors.end(), *j) == m_vNeighbors.end() && j->nodeNum != m_mpiRank) {
 						m_vNeighbors.push_back(*j);
+						m_vNeighborsOfNeighbors.push_back(vector<NodeNeighbor>());
+						m_neighborTimeSinceLastUpdate.push_back(chrono::high_resolution_clock::now());
 
 						m_fp << LogOutputHeader() << "\t\tAcquired new neighbor:" << endl
 							<< "\t\t\t\tNode num: " << j->nodeNum << endl
@@ -785,7 +828,11 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 					TakeoverDHTArea(deadNeighborIt->neighbor.neighborArea);
 
 					m_fp << LogOutputHeader() << "\t\tErasing dead node from dead neighbors list." << endl;
+					OutputVecOperation(true);
 					m_vDeadNeighbors.erase(deadNeighborIt);
+					OutputVecOperation(false);
+
+					MPI_Ssend((void*)&m_dhtArea, 1, InterNodeMessage::MPI_NodeDHTArea, m_rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD);
 				}
 				catch (const out_of_range& oor) {
 					m_fp << "Out of range error: " << oor.what() << endl;
@@ -801,7 +848,9 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 			m_neighborTimeSinceLastUpdate.push_back(chrono::high_resolution_clock::now());
 			
 			// then remove it from this vector as its no longer considered dead.
+			OutputVecOperation(true);
 			m_vDeadNeighbors.erase(deadNeighborIt);
+			OutputVecOperation(false);
 		} else if (nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::SMALLER_AREA || nodeTakeoverResponse.response == InterNodeMessage::NodeTakeoverResponse::LOWER_NODE_ADDRESS) {
 			// not sure how to response to this yet except log it
 			m_fp << "\tNode " << srcNode << " claims to have a smaller DHT area or equal DHT area and lower node address:" << endl
@@ -813,10 +862,13 @@ void Node::ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeov
 			m_fp << "\tUnknown NodeTakeoverResponse." << endl;
 		}
 	}
+
+	OutputDebugMsg("Reached end of ResolveNodeTakeoverResponse");
 }
 
 void Node::TakeoverDHTArea(NodeDHTArea dhtArea)
 {
+	m_bSeenDeath = true;
 	bool leftEdgeAbutted = abs(dhtArea.right - m_dhtArea.left) < m_edgeAbutEpsilon;
 	bool rightEdgeAbutted = abs(dhtArea.left - m_dhtArea.right) < m_edgeAbutEpsilon;
 	bool topEdgeAbutted = abs(dhtArea.bottom - m_dhtArea.top) < m_edgeAbutEpsilon;
@@ -924,14 +976,17 @@ void Node::PruneNeighbors()
 		} else {
 			m_fp << LogOutputHeader() << "Is not neighbor. Removing it." << endl;
 			m_fp.flush();
+			OutputDebugMsg("m_vNeighbors size: %d", m_vNeighbors.size());
+			OutputDebugMsg("m_neighborTimeSinceLastUpdate size: %d", m_neighborTimeSinceLastUpdate.size());
+			OutputDebugMsg("m_vNeighborsOfNeighbors size: %d", m_vNeighborsOfNeighbors.size());
+			OutputDebugMsg("i: %d", i);
+			OutputVecOperation(true);
 			m_vNeighbors.erase(m_vNeighbors.begin() + i);
-			m_fp << "1 ";
-			m_fp.flush();
+			OutputVecOperation(true);
 			m_neighborTimeSinceLastUpdate.erase(m_neighborTimeSinceLastUpdate.begin() + i);
-			m_fp << "2 ";
-			m_fp.flush();
+			OutputVecOperation(true);
 			m_vNeighborsOfNeighbors.erase(m_vNeighborsOfNeighbors.begin() + i);
-			m_fp << "3" << endl;
+			OutputVecOperation(false);
 		}
 
 		m_fp.flush();

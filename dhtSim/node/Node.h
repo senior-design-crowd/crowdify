@@ -67,6 +67,8 @@ private:
 	const std::chrono::duration<int, std::milli>					m_timeUntilNeighborConsideredOffline;
 	const std::chrono::duration<float, std::milli>					m_takeoverTimerPerArea;
 	const float														m_edgeAbutEpsilon;
+
+	bool															m_bSeenDeath;
 };
 
 #endif

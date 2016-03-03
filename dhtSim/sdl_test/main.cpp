@@ -22,6 +22,92 @@ using namespace std;
 
 typedef chrono::high_resolution_clock timer;
 
+namespace NodeToRootMessage {
+	MPI_Datatype MPI_NodeDHTArea;
+	MPI_Datatype MPI_NodeToNodeMsg;
+	MPI_Datatype MPI_NodeNeighborUpdate;
+}
+
+bool InitMPITypes()
+{
+	int ret = -1;
+
+	// MPI_NodeDHTArea
+	{
+		/*
+		typedef struct _NodeDHTArea {
+			float left, right, top, bottom;
+		} NodeDHTArea;
+		*/
+
+		MPI_Datatype types[] = { MPI_FLOAT };
+		int blockSizes[] = { 4 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeDHTArea);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+
+		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeDHTArea);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+	}
+
+	// MPI_NodeToNodeMsg
+	{
+		/*typedef struct {
+			int										otherNode;
+			NodeToNodeMsgTypes::NodeToNodeMsgType	msgType;
+		} NodeToNodeMsg;*/
+
+		MPI_Datatype types[] = { MPI_INT };
+		int blockSizes[] = { 2 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeToNodeMsg);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+
+		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeToNodeMsg);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+	}
+
+	// MPI_NodeNeighborUpdate
+	{
+		/*typedef struct {
+			int neighbors[10];
+			int numNeighbors;
+		} NodeNeighborUpdate;*/
+
+		MPI_Datatype types[] = { MPI_INT };
+		int blockSizes[] = { 11 };
+		MPI_Aint displacements[] = {
+			static_cast<MPI_Aint>(0)
+		};
+
+		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeNeighborUpdate);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+
+		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeNeighborUpdate);
+		if (ret != MPI_SUCCESS) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 int main(int argc, char* argv[])
 {
 	// initialize MPI
@@ -35,6 +121,8 @@ int main(int argc, char* argv[])
 			this_thread::sleep_for(chrono::milliseconds(200));
 		}
 	}
+
+	InitMPITypes();
 
 	// send all the other nodes my rank
 	for (int i = 0; i < mpiNumNodes; ++i) {
@@ -64,6 +152,9 @@ int main(int argc, char* argv[])
 
 	SDL_Texture*	graphTexture = NULL;
 	SDL_Rect		graphRect;
+
+	int				graphFrame = 0, dhtFrame = 0;
+	bool			dhtChanged = true;
 
 	vector<FontTexture>	nodeLabels;
 
@@ -113,7 +204,10 @@ int main(int argc, char* argv[])
 		const chrono::milliseconds milliTimeoutUntilNodeIdleState = chrono::milliseconds(300);
 
 		timer::time_point lastNodeAliveStateChange = timer::now();
-		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(3);
+		const chrono::milliseconds milliUntilNextNodeBroughtAlive = chrono::seconds(1);
+		const chrono::milliseconds milliUntilNextNodeAliveStateChange = chrono::seconds(7);
+
+		int nodeChangingStage = 0;
 
 		default_random_engine randGenerator((unsigned int)chrono::system_clock::now().time_since_epoch().count());
 		uniform_int_distribution<int> randomNodeGenerator(0, numNetworkNodes - 1);
@@ -127,65 +221,100 @@ int main(int argc, char* argv[])
 
 			// check if its time to tell a new node to flip its
 			// alive state
-			if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeAliveStateChange && numAliveNodes < numNetworkNodes) {
+			bool timeToSwitchState = false;
+			if (nodeChangingStage == 0) {
+				if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeBroughtAlive) {
+					timeToSwitchState = true;
+				}
+			} else if (nodeChangingStage == 1) {
+				if (chrono::duration_cast<chrono::milliseconds>(timer::now() - lastNodeAliveStateChange) >= milliUntilNextNodeAliveStateChange) {
+					timeToSwitchState = true;
+				}
+			}
+
+			if (timeToSwitchState) {
 				int nodeToChange = randomNodeGenerator(randGenerator);
 
-				while (nodeToChange == mpiRank || nodeStates[nodeToChange].isAlive) {
-					nodeToChange = randomNodeGenerator(randGenerator);
+				if (nodeChangingStage == 0) {
+					while (nodeToChange == mpiRank || nodeStates[nodeToChange].isAlive) {
+						nodeToChange = randomNodeGenerator(randGenerator);
+					}
+
+					nodeStates[nodeToChange].isAlive = true;
+				} else if (nodeChangingStage == 1) {
+					while (nodeToChange == mpiRank) {
+						nodeToChange = randomNodeGenerator(randGenerator);
+					}
+
+					// flip its alive state
+					nodeStates[nodeToChange].isAlive = !nodeStates[nodeToChange].isAlive;
 				}
 
-				fp << "Sending ALIVE msg to node " << nodeToChange << endl;
+				fp << "Changing node " << nodeToChange << "'s alive state." << endl;
 
-				// if the node is already alive then kill it,
-				// otherwise bring it back to life again
-				//nodeStates[nodeToChange].isAlive = !nodeStates[nodeToChange].isAlive;
+				graphStateChanged = true;
 
-				/*if(!nodeStates[nodeToChange].isAlive)
-				{*/
-					nodeStates[nodeToChange].isAlive = true;
-					graphStateChanged = true;
+				NodeAliveStates::NodeAliveState newAliveState;
+				int								aliveNode = -1;
 
-					NodeAliveStates::NodeAliveState newAliveState;
-					int								aliveNode = -1;
-
-					// if we're killing a node, we have to remove
-					// its DHT area
-
-					//
-					// NOTE: don't kill off any nodes for now
-					//
-					/*if (!nodeStates[nodeToChange].isAlive) {
-					dhtAreas[nodeToChange] = defaultDHTArea;
-					--numAliveNodes;
-					newAliveState = NodeAliveStates::DEAD;
-					} else {*/
+				if (nodeStates[nodeToChange].isAlive) {
+					fp << "Sending ALIVE msg to node " << nodeToChange << endl;
 					++numAliveNodes;
 
-					if (numAliveNodes == 1) {
+					fp << numAliveNodes << " out of " << numNetworkNodes << " alive." << endl;
+
+					if (numAliveNodes == numNetworkNodes) {
+						fp << "Switching to node changing stage 1, where alive states are continually flipped." << endl;
+						nodeChangingStage = 1;
+					}
+
+					if (numAliveNodes < 2) {
 						newAliveState = NodeAliveStates::ONLY_NODE_IN_NETWORK;
 						fp << "\tNode is only alive node in network";
 					} else {
 						newAliveState = NodeAliveStates::ALIVE;
+					}
+				} else {
+					fp << "Sending KILL msg to node " << nodeToChange << endl;
+					newAliveState = NodeAliveStates::DEAD;
+					--numAliveNodes;
 
-						// find the first alive node
-						for (aliveNode = 0; aliveNode < numNetworkNodes; ++aliveNode) {
-							if (nodeStates[aliveNode].isAlive && aliveNode != nodeToChange) {
-								break;
-							}
+					dhtAreas[nodeToChange].left = 0.0f;
+					dhtAreas[nodeToChange].right = 0.0f;
+					dhtAreas[nodeToChange].top = 0.0f;
+					dhtAreas[nodeToChange].bottom = 0.0f;
+
+					nodeStates[nodeToChange].isAlive = false;
+					graphStateChanged = true;
+
+					if (numAliveNodes < 2) {
+						fp << "Switching to node changing stage 0, where nodes are all brought to life." << endl;
+						nodeChangingStage = 0;
+					}
+
+					dhtChanged = true;
+				}
+
+				if (newAliveState == NodeAliveStates::ALIVE) {
+					// find the first alive node
+					for (aliveNode = 0; aliveNode < numNetworkNodes; ++aliveNode) {
+						if (nodeStates[aliveNode].isAlive && aliveNode != nodeToChange) {
+							break;
 						}
-
-						fp << "\tSending it alive node: " << aliveNode << endl;
 					}
-					//}
 
-					fp.flush();
+					fp << "\tSending it alive node: " << aliveNode << endl;
+				}
 
-					MPI_Send((void*)&newAliveState, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+				fp.flush();
 
-					if (aliveNode != -1) {
-						MPI_Send((void*)&aliveNode, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
-					}
-				//}
+				MPI_Send((void*)&newAliveState, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+
+				if (newAliveState == NodeAliveStates::ALIVE) {
+					MPI_Send((void*)&aliveNode, 1, MPI_INT, nodeToChange, NodeToRootMessageTags::NODE_ALIVE, MPI_COMM_WORLD);
+				}
+
+				lastNodeAliveStateChange = timer::now();
 			}
 
 			// check if any new messages have been received
@@ -200,7 +329,7 @@ int main(int argc, char* argv[])
 
 				if(probeFlag) {
 					NodeDHTArea newArea;
-					MPI_Recv((void*)&newArea, sizeof(NodeDHTArea) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+					MPI_Recv((void*)&newArea, 1, NodeToRootMessage::MPI_NodeDHTArea, MPI_ANY_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 
 					fp << "Got DHT_AREA_UPDATE from " << mpiStatus.MPI_SOURCE << ":" << endl
 						<< "\tLeft: " << newArea.left << endl
@@ -210,6 +339,7 @@ int main(int argc, char* argv[])
 
 					int src = mpiStatus.MPI_SOURCE;
 					dhtAreas[src] = newArea;
+					dhtChanged = true;
 				}
 			}
 
@@ -219,7 +349,7 @@ int main(int argc, char* argv[])
 			//while (probeFlag) {
 			if (probeFlag) {
 				NodeToRootMessage::NodeToNodeMsg msg;
-				MPI_Recv((void*)&msg, sizeof(NodeToRootMessage::NodeToNodeMsg) / sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&msg, 1, NodeToRootMessage::MPI_NodeToNodeMsg, MPI_ANY_SOURCE, NodeToRootMessageTags::NODE_TO_NODE_MSG, MPI_COMM_WORLD, &mpiStatus);
 
 				if (msg.msgType == NodeToNodeMsgTypes::SENDING) {
 					fp << "Got message from " << mpiStatus.MPI_SOURCE << " to " << msg.otherNode << endl;
@@ -265,11 +395,67 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			probeFlag = 0;
+			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+			while (probeFlag) {
+				int stringLen = 0;
+				MPI_Get_count(&mpiStatus, MPI_CHAR, &stringLen);
+
+				string	filename(stringLen, ' ');
+				int		lineNum;
+				bool	before;
+
+				MPI_Recv((void*)filename.c_str(), stringLen, MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&lineNum, 1, MPI_INT, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&before, sizeof(bool), MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &mpiStatus);
+
+				fp << "Vector operation at node " << mpiStatus.MPI_SOURCE << ":" << endl
+					<< "\tFilename: " << filename << endl
+					<< "\tLine: " << lineNum << endl
+					<< "\tBefore: " << before << endl
+					<< endl;
+
+				probeFlag = 0;
+				MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+			}
+
+			probeFlag = 0;
+			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+			while (probeFlag) {
+				int stringLen = 0;
+				MPI_Get_count(&mpiStatus, MPI_CHAR, &stringLen);
+
+				string	filename(stringLen, ' ');
+				MPI_Recv((void*)filename.c_str(), stringLen, MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				MPI_Iprobe(mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+
+				MPI_Get_count(&mpiStatus, MPI_CHAR, &stringLen);
+				string	msg(stringLen, ' ');
+				MPI_Recv((void*)msg.c_str(), stringLen, MPI_CHAR, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				int		lineNum;
+				MPI_Recv((void*)&lineNum, 1, MPI_INT, mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &mpiStatus);
+
+				if(nodeChangingStage != 0) {
+					fp << "Debug message at node " << mpiStatus.MPI_SOURCE << ":" << endl
+						<< "\tFilename: " << filename << endl
+						<< "\tLine: " << lineNum << endl
+						<< "\tMessage: " << msg << endl
+						<< endl;
+				}
+
+				probeFlag = 0;
+				MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::DEBUG_MSG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+			}
+
 			MPI_Iprobe(MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 
 			if (probeFlag) {
 				NodeToRootMessage::NodeNeighborUpdate neighborUpdate;
-				MPI_Recv((void*)&neighborUpdate, sizeof(NodeToRootMessage::NodeNeighborUpdate)/sizeof(int), MPI_INT, MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+				MPI_Recv((void*)&neighborUpdate, 1, NodeToRootMessage::MPI_NodeNeighborUpdate, MPI_ANY_SOURCE, NodeToRootMessageTags::NEIGHBOR_UPDATE, MPI_COMM_WORLD, &mpiStatus);
 				
 				// update node edges
 				nodeEdges[mpiStatus.MPI_SOURCE].clear();
@@ -329,6 +515,18 @@ int main(int argc, char* argv[])
 
 			RenderDHT(dhtAreas, nodeLabels, &engine, 1);
 			engine.PresentWindow(1);
+
+			++graphFrame;
+			
+			if (dhtChanged) {
+				++dhtFrame;
+
+				stringstream ss;
+				ss << "Images\\dht_frame" << dhtFrame << ".bmp";
+
+				engine.TakeScreenshot(1, ss.str().c_str());
+				dhtChanged = false;
+			}
 
 			this_thread::sleep_for(chrono::milliseconds(20));
 		}

@@ -11,6 +11,7 @@
 typedef struct {
 	NodeNeighbor									neighbor;
 	std::vector<NodeNeighbor>						neighborNeighbors;
+	std::vector<bool>								neighborsAllowingTakeover;
 	std::chrono::high_resolution_clock::time_point	timeOfDeath;
 	std::chrono::duration<float, std::milli>		timeUntilTakeover;
 
@@ -19,7 +20,7 @@ typedef struct {
 		INITIAL = 0,
 		TIMER_OFF
 	} state;
-} DeadNeighbor;
+}	DeadNeighbor;
 
 class Node
 {
@@ -35,7 +36,9 @@ public:
 	const std::vector<NodeNeighbor>&	GetNeighbors();
 	int									GetNearestNeighbor(float x, float y);
 	const int							GetNextSplitAxis();
-	void								ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeoverRequest& nodeTakeoverRequest);
+	void								ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverNotification);
+	void								ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverRequest);
+	void								ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeoverResponse& nodeTakeoverResponse);
 
 	std::string LogOutputHeader();
 
@@ -44,6 +47,7 @@ private:
 	void		SendNeighborsDHTUpdate();
 	void		SendRootNeighborsUpdate();
 	bool		AreNeighbors(const NodeDHTArea& a, const NodeDHTArea& b);
+	void		TakeoverDHTArea(NodeDHTArea dhtArea);
 
 	bool															m_bAlive;
 	std::vector<NodeNeighbor>										m_vNeighbors;
@@ -62,6 +66,9 @@ private:
 	const std::chrono::duration<int, std::milli>					m_timeUntilUpdateNeighbors;
 	const std::chrono::duration<int, std::milli>					m_timeUntilNeighborConsideredOffline;
 	const std::chrono::duration<float, std::milli>					m_takeoverTimerPerArea;
+	const float														m_edgeAbutEpsilon;
+
+	bool															m_bSeenDeath;
 };
 
 #endif

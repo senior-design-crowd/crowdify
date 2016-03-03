@@ -9,6 +9,8 @@ namespace NodeToRootMessageTags
 		DHT_AREA_UPDATE,
 		NEIGHBOR_UPDATE,
 		NODE_TO_NODE_MSG,
+		VECTOR_OPERATION,
+		DEBUG_MSG,
 		NUM_NODE_MSG_TAGS
 	};
 };
@@ -34,6 +36,10 @@ namespace NodeToRootMessage
 		int neighbors[10];
 		int numNeighbors;
 	} NodeNeighborUpdate;
+
+	extern MPI_Datatype MPI_NodeDHTArea;
+	extern MPI_Datatype MPI_NodeToNodeMsg;
+	extern MPI_Datatype MPI_NodeNeighborUpdate;
 }
 
 namespace NodeAliveStates

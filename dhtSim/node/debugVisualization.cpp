@@ -1,7 +1,6 @@
 #include <mpi.h>
 
-#include "nodeMessageTags.h"
-#include "header.h"
+#include "nodeMessages.h"
 
 void NotifyRootOfMsg(NodeToNodeMsgTypes::NodeToNodeMsgType msgType, int otherNode, int rootRank)
 {

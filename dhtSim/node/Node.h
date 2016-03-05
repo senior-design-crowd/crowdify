@@ -6,7 +6,7 @@
 #include <fstream>
 #include <string>
 
-#include "header.h"
+#include "nodeMessages.h"
 
 typedef struct {
 	NodeNeighbor									neighbor;
@@ -28,32 +28,35 @@ public:
 	Node(int mpiRank, int rootRank, std::ofstream* fp);
 
 	bool	InitializeDHTArea(int aliveNode);
-	bool	SplitDHTArea(int newNode, NodeDHTArea& newNodeDHTArea, std::vector<NodeNeighbor>& r_vNewNodeNeighbors, std::vector<std::vector<NodeNeighbor>>& r_vNewNodeNeighborsOfNeighbors);
-	bool	UpdateNeighborDHTArea(int nodeNum, const NodeDHTArea& dhtArea, const std::vector<NodeNeighbor>& neighborsOfNeighbor);
+	bool	SplitDHTArea(int newNode, DHTArea& newDHTArea, std::vector<NodeNeighbor>& r_vNewNodeNeighbors, std::vector<std::vector<NodeNeighbor>>& r_vNewNodeNeighborsOfNeighbors);
+	bool	UpdateNeighborDHTArea(int nodeNum, const DHTArea& dhtArea, const std::vector<NodeNeighbor>& neighborsOfNeighbor);
 	void	UpdateNeighbors();
 
-	const NodeDHTArea&					GetDHTArea();
-	const std::vector<NodeNeighbor>&	GetNeighbors();
-	int									GetNearestNeighbor(float x, float y);
-	const int							GetNextSplitAxis();
+	const DHTArea&						GetDHTArea() const;
+	const std::vector<NodeNeighbor>&	GetNeighbors() const;
+	int									GetNearestNeighbor(float x, float y) const;
+	const int							GetNextSplitAxis() const;
+
 	void								ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverNotification);
 	void								ResolveNodeTakeoverRequest(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverRequest);
 	void								ResolveNodeTakeoverResponse(int srcNode, InterNodeMessage::NodeTakeoverResponse& nodeTakeoverResponse);
 
-	std::string LogOutputHeader();
+	std::string		LogOutputHeader() const;
+
+	static bool		SendNeighborsOverMPI(const std::vector<NodeNeighbor>& neighbors, int rank, int tag);
+	static bool		RecvNeighborsOverMPI(std::vector<NodeNeighbor>& neighbors, int rank, int tag);
 
 private:
 	void		PruneNeighbors();
 	void		SendNeighborsDHTUpdate();
 	void		SendRootNeighborsUpdate();
-	bool		AreNeighbors(const NodeDHTArea& a, const NodeDHTArea& b);
-	void		TakeoverDHTArea(NodeDHTArea dhtArea);
+	void		TakeoverDHTArea(DHTArea dhtArea);
 
 	bool															m_bAlive;
 	std::vector<NodeNeighbor>										m_vNeighbors;
 	std::vector<std::vector<NodeNeighbor>>							m_vNeighborsOfNeighbors;
 	std::vector<DeadNeighbor>										m_vDeadNeighbors;
-	NodeDHTArea														m_dhtArea;
+	DHTArea															m_dhtArea;
 	std::vector<std::chrono::high_resolution_clock::time_point>		m_neighborTimeSinceLastUpdate;
 	std::chrono::high_resolution_clock::time_point					m_timeOfLastNeighborUpdate;
 	std::mt19937													m_randGenerator;

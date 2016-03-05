@@ -16,97 +16,11 @@
 
 #include "header.h"
 #include "SDLEngine.h"
-#include "nodeMessageTags.h"
+#include "nodeMessages.h"
 
 using namespace std;
 
 typedef chrono::high_resolution_clock timer;
-
-namespace NodeToRootMessage {
-	MPI_Datatype MPI_NodeDHTArea;
-	MPI_Datatype MPI_NodeToNodeMsg;
-	MPI_Datatype MPI_NodeNeighborUpdate;
-}
-
-bool InitMPITypes()
-{
-	int ret = -1;
-
-	// MPI_NodeDHTArea
-	{
-		/*
-		typedef struct _NodeDHTArea {
-			float left, right, top, bottom;
-		} NodeDHTArea;
-		*/
-
-		MPI_Datatype types[] = { MPI_FLOAT };
-		int blockSizes[] = { 4 };
-		MPI_Aint displacements[] = {
-			static_cast<MPI_Aint>(0)
-		};
-
-		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeDHTArea);
-		if (ret != MPI_SUCCESS) {
-			return false;
-		}
-
-		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeDHTArea);
-		if (ret != MPI_SUCCESS) {
-			return false;
-		}
-	}
-
-	// MPI_NodeToNodeMsg
-	{
-		/*typedef struct {
-			int										otherNode;
-			NodeToNodeMsgTypes::NodeToNodeMsgType	msgType;
-		} NodeToNodeMsg;*/
-
-		MPI_Datatype types[] = { MPI_INT };
-		int blockSizes[] = { 2 };
-		MPI_Aint displacements[] = {
-			static_cast<MPI_Aint>(0)
-		};
-
-		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeToNodeMsg);
-		if (ret != MPI_SUCCESS) {
-			return false;
-		}
-
-		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeToNodeMsg);
-		if (ret != MPI_SUCCESS) {
-			return false;
-		}
-	}
-
-	// MPI_NodeNeighborUpdate
-	{
-		/*typedef struct {
-			int neighbors[10];
-			int numNeighbors;
-		} NodeNeighborUpdate;*/
-
-		MPI_Datatype types[] = { MPI_INT };
-		int blockSizes[] = { 11 };
-		MPI_Aint displacements[] = {
-			static_cast<MPI_Aint>(0)
-		};
-
-		ret = MPI_Type_create_struct(1, blockSizes, displacements, types, &NodeToRootMessage::MPI_NodeNeighborUpdate);
-		if (ret != MPI_SUCCESS) {
-			return false;
-		}
-
-		ret = MPI_Type_commit(&NodeToRootMessage::MPI_NodeNeighborUpdate);
-		if (ret != MPI_SUCCESS) {
-			return false;
-		}
-	}
-
-	return true;
-}
 
 int main(int argc, char* argv[])
 {
@@ -185,8 +99,11 @@ int main(int argc, char* argv[])
 		ofstream fp("masterNode.txt");
 		fp << "my rank: " << mpiRank << endl;
 
-		NodeDHTArea			defaultDHTArea = { 0.0f, 0.0f, 0.0f, 0.0f};
-		vector<NodeDHTArea> dhtAreas(numNetworkNodes, defaultDHTArea);
+		DHTRegion			defaultDHTRegion = { 0.0f, 0.0f, 0.0f, 0.0f};
+		DHTArea				defaultDHTArea;
+		defaultDHTArea.AddRegion(defaultDHTRegion);
+
+		vector<DHTArea> dhtAreas(numNetworkNodes, defaultDHTArea);
 
 		// tell one of the nodes to come alive to start the
 		// network
@@ -279,10 +196,7 @@ int main(int argc, char* argv[])
 					newAliveState = NodeAliveStates::DEAD;
 					--numAliveNodes;
 
-					dhtAreas[nodeToChange].left = 0.0f;
-					dhtAreas[nodeToChange].right = 0.0f;
-					dhtAreas[nodeToChange].top = 0.0f;
-					dhtAreas[nodeToChange].bottom = 0.0f;
+					dhtAreas[nodeToChange] = defaultDHTArea;
 
 					nodeStates[nodeToChange].isAlive = false;
 					graphStateChanged = true;
@@ -328,14 +242,13 @@ int main(int argc, char* argv[])
 				MPI_Iprobe(nodeNum, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
 
 				if(probeFlag) {
-					NodeDHTArea newArea;
-					MPI_Recv((void*)&newArea, 1, NodeToRootMessage::MPI_NodeDHTArea, MPI_ANY_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD, &mpiStatus);
+					DHTArea newArea;
+					newArea.RecvOverMPI(mpiStatus.MPI_SOURCE, NodeToRootMessageTags::DHT_AREA_UPDATE);
 
 					fp << "Got DHT_AREA_UPDATE from " << mpiStatus.MPI_SOURCE << ":" << endl
-						<< "\tLeft: " << newArea.left << endl
-						<< "\tRight: " << newArea.right << endl
-						<< "\tTop: " << newArea.top << endl
-						<< "\tBottom: " << newArea.bottom << endl;
+						<< newArea << endl;
+
+					const vector<DHTRegion>& regions = newArea.GetRegions();
 
 					int src = mpiStatus.MPI_SOURCE;
 					dhtAreas[src] = newArea;

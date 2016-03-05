@@ -27,15 +27,24 @@
     <ClCompile Include="SDLEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\node\DHTArea.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\node\nodeMessages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="nodeMessageTags.h">
+    <ClInclude Include="SDLEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SDLEngine.h">
+    <ClInclude Include="..\node\DHTArea.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\node\nodeMessages.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

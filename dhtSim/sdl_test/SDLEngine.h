@@ -34,6 +34,7 @@ public:
 
 	void			RenderTexture(int windowIndex, SDL_Texture* texture, SDL_Rect* dest = NULL, SDL_Rect* src = NULL);
 	void			PresentWindow(int windowIndex);
+	bool			TakeScreenshot(int windowIndex, const char* filename);
 
 	bool			CreateSDLWindow(const char* windowName, int width = 800, int height = 600);
 	void			ClearWindow(int index);

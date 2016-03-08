@@ -190,3 +190,45 @@ void SDLEngine::CreateFontTextures(const char* fontFile, int fontSize, SDL_Color
 		SDL_FreeSurface(optimizedSurface);
 	}
 }
+
+bool SDLEngine::TakeScreenshot(int windowIndex, const char* filename)
+{
+	// reference: http://stackoverflow.com/questions/20233469/how-do-i-take-and-save-a-bmp-screenshot-in-sdl-2
+	// author: neilf
+
+	SDL_Surface* saveSurface = NULL;
+	SDL_Surface* infoSurface = NULL;
+	infoSurface = SDL_GetWindowSurface(m_windows[windowIndex].sdlWindow);
+	if (infoSurface == NULL) {
+		std::cerr << "Failed to create info surface from window in saveScreenshotBMP(string), SDL_GetError() - " << SDL_GetError() << "\n";
+	} else {
+		unsigned char * pixels = new (std::nothrow) unsigned char[infoSurface->w * infoSurface->h * infoSurface->format->BytesPerPixel];
+		if (pixels == 0) {
+			std::cerr << "Unable to allocate memory for screenshot pixel data buffer!\n";
+			return false;
+		} else {
+			if (SDL_RenderReadPixels(m_windows[windowIndex].sdlRenderer, &infoSurface->clip_rect, infoSurface->format->format, pixels, infoSurface->w * infoSurface->format->BytesPerPixel) != 0) {
+				std::cerr << "Failed to read pixel data from SDL_Renderer object. SDL_GetError() - " << SDL_GetError() << "\n";
+				pixels = NULL;
+				return false;
+			} else {
+				saveSurface = SDL_CreateRGBSurfaceFrom(pixels, infoSurface->w, infoSurface->h, infoSurface->format->BitsPerPixel, infoSurface->w * infoSurface->format->BytesPerPixel, infoSurface->format->Rmask, infoSurface->format->Gmask, infoSurface->format->Bmask, infoSurface->format->Amask);
+				if (saveSurface == NULL) {
+					std::cerr << "Couldn't create SDL_Surface from renderer pixel data. SDL_GetError() - " << SDL_GetError() << "\n";
+					return false;
+				}
+				
+				SDL_SaveBMP(saveSurface, filename);
+				SDL_FreeSurface(saveSurface);
+				saveSurface = NULL;
+			}
+
+			delete[] pixels;
+		}
+
+		SDL_FreeSurface(infoSurface);
+		infoSurface = NULL;
+	}
+
+	return true;
+}

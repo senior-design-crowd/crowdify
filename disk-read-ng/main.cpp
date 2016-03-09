@@ -39,7 +39,7 @@ int create_test_data() {
 	q = c.query("SELECT * FROM files");
 	qs.clear();
 	qs.str(string());
-	qs << "INSERT INTO directories VALUES(NULL,\"/root/src/crowdify/disk-read-ng/test/\"," << 0 << "," << 0<< "," << 0 << ");";
+	qs << "INSERT INTO directories VALUES(NULL,\"/root/src/crowdify/disk-read-ng/test/\"," << 0 << "," << 0 << "," << 0 << ");";
 	int did = q.execute(qs.str()).insert_id();
 	cerr << qs.str() << ":" << did << endl;
 
@@ -171,6 +171,7 @@ int ssh_ftw(int did) {
 
 	int rc = 0;
 	while ((rc = libssh2_sftp_readdir_ex(sftp_dir, mem, 512, name, 512, &sftp_attr)) > 0) {
+		cerr << name << ": " << hex << sftp_attr.permissions << endl;
 		if ((sftp_attr.permissions & 0100000L) != 0) {
 			cout << name << endl;
 

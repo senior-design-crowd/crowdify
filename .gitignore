@@ -9,3 +9,12 @@
 *.fdb_latexmk
 *.bib
 *.blg
+*.sdf
+*.sln
+*.lib
+*.pdb
+*.vcxproj
+*.filters
+*.tlog
+*.idb
+*.log

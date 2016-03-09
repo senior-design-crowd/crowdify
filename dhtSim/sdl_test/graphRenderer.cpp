@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 #include <set>
 #include <sstream>
 
@@ -112,6 +113,16 @@ bool RenderGraph(const string& graphDotStr, SDLEngine* engine, int windowIndex, 
 
 		return false;
 	}
+
+	static int frameNum = 0;
+	++frameNum;
+
+	stringstream ss;
+	ss << "Images\\networkGraph_frame" << frameNum << ".png";
+	
+	ofstream fp(ss.str());
+	fp.write(graphRenderingBuf, graphRenderingBufSize);
+	fp.close();
 
 	// load the PNG image into a surface
 	*r_pngTexture = engine->LoadSDLImage(graphRenderingBuf, graphRenderingBufSize, windowIndex, width, height);

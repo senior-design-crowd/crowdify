@@ -69,8 +69,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Program Files %28x86%29\Graphviz2.38\include;C:\Users\mikfig\Documents\Coding\Libraries\SDL2-2.0.3\include;C:\Users\mikfig\Documents\Coding\Libraries\SDL2_image-2.0.0\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\mikfig\Documents\Coding\Libraries\SDL2-2.0.3\lib\x86;C:\Users\mikfig\Documents\Coding\Libraries\SDL2_image-2.0.0\lib\x86;C:\Program Files %28x86%29\Graphviz2.38\lib\release\lib;C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Program Files %28x86%29\Graphviz2.38\include;C:\Users\mikfig\Documents\Coding\Libraries\SDL2-2.0.3\include;C:\Users\mikfig\Documents\Coding\Libraries\SDL2_image-2.0.0\include;C:\Users\mikfig\Documents\Coding\Libraries\SDL2_ttf-2.0.12\include;$(SolutionDir)\node;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\mikfig\Documents\Coding\Libraries\SDL2-2.0.3\lib\x86;C:\Users\mikfig\Documents\Coding\Libraries\SDL2_image-2.0.0\lib\x86;C:\Program Files %28x86%29\Graphviz2.38\lib\release\lib;C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x86;C:\Users\mikfig\Documents\Coding\Libraries\SDL2_ttf-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -82,7 +82,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>msmpi.lib;SDL2.lib;SDL2_image.lib;SDL2main.lib;cgraph.lib;dot.lib;dotgen.lib;gvc.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>msmpi.lib;SDL2.lib;SDL2_image.lib;SDL2_ttf.lib;SDL2main.lib;cgraph.lib;dot.lib;dotgen.lib;gvc.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -125,14 +125,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\node\DHTArea.cpp" />
+    <ClCompile Include="..\node\nodeMessages.cpp" />
     <ClCompile Include="graphRenderer.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="networkRenderer.cpp" />
-    <ClCompile Include="sdl.cpp" />
+    <ClCompile Include="SDLEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\node\DHTArea.h" />
+    <ClInclude Include="..\node\nodeMessages.h" />
     <ClInclude Include="header.h" />
-    <ClInclude Include="nodeMessageTags.h" />
+    <ClInclude Include="SDLEngine.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

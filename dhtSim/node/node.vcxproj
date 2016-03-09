@@ -121,13 +121,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="debugVisualization.cpp" />
+    <ClCompile Include="DHTArea.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Node.cpp" />
+    <ClCompile Include="nodeMessages.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="header.h" />
+    <ClInclude Include="DHTArea.h" />
     <ClInclude Include="Node.h" />
-    <ClInclude Include="nodeMessageTags.h" />
+    <ClInclude Include="nodeMessages.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

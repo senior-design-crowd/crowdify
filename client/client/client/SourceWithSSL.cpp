@@ -18,6 +18,9 @@
 #include <cyassl/ssl.h>
 #include <cyassl/openssl/ssl.h>
 #include <cyassl/test.h>
+/*#include <libssh/server.h>
+#include <libssh/libssh.h>
+#include <libssh/callbacks.h>*/
 bool received_response = false;
 SOCKADDR_IN server;
 
@@ -189,9 +192,17 @@ int main() {
 	char rbuf[PACKET_SIZE];
 	SSL_read(ssl, rbuf, sizeof(rbuf));
 
-	std::cout << rbuf << std::endl;
+	std::cout << "received message: " << rbuf << std::endl;
+
+	FILE* fp = fopen(SSH_KEYS, "a");
+	fprintf(fp, "\n");
+	fprintf(fp, rbuf);
+	fclose(fp);
+
 
 	std::cout << "SSL finished" << std::endl;
+	int x;
+	std::cin >> x;
 	
 	SSL_shutdown(ssl);
 	SSL_free(ssl);
@@ -200,7 +211,9 @@ int main() {
 	CloseSocket(sockfd);
 
 	CyaSSL_Cleanup();
+	/*
+	ssh_bind sshbind;
 
-
+	ssh_bind_options_set(sshbind);*/
 
 }

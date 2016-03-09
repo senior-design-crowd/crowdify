@@ -6,8 +6,14 @@
 //#define CHAIN_CERT "../../certs/www.example.com.cert.pem"
 #define CHAIN_CERT "../../certs/ca-cert.pem"
 
+
+#define SSHD_USER "libssh"
+#define SSHD_PASSWORD "libssh"
+#define KEYS_FOLDER "../../certs/"
+#define SSH_KEYS "C:\\Users\\Eric\\.ssh\\authorized_keys"
+
 const int UDP_BROADCAST_PORT = 1234;
-const int PACKET_SIZE = 1024;
+const int PACKET_SIZE = 8096;
 const int HANDSHAKE_PORT = 1236;
 
 //static INLINE int PasswordCallBack(char* passwd, int sz, int rw, void* userdata)

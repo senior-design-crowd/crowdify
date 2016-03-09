@@ -19,14 +19,19 @@
 
 #define FAIL -1
 
-#define PACKET_SIZE 1024
+#define PACKET_SIZE 8192
 #define UDP_BROADCAST_PORT 1234
 #define RESPOND_PORT 1235
 #define HANDSHAKE_PORT 1236
+#define SSH_KEY "/root/.ssh/id_rsa.pub"
 
 
 int main(int argc, char *argv[])
 {    
+
+	//the main loop
+
+    while(1){
 
 	//listen for the initial UDP broadcast
     int handle = socket( AF_INET, SOCK_DGRAM, 0 );
@@ -116,13 +121,18 @@ int main(int argc, char *argv[])
 
 	CyaSSL_read(ssl, buf, sizeof(buf));
 	std::cout << "Client message: " << buf << std::endl;
-	sprintf(reply, "hello");
+	//sprintf(reply, "hello");
+	FILE *fp = fopen(SSH_KEY, "r");
+	fgets(reply, PACKET_SIZE, fp);
 	CyaSSL_write(ssl, reply, sizeof(reply));
 
 	CyaSSL_shutdown(ssl);
 	CyaSSL_free(ssl);
 	CloseSocket(clientfd);
+	CloseSocket(sockfd);
 	CyaSSL_CTX_free(ctx);
 
 	CyaSSL_Cleanup();
+	sleep(5);//wait 5 seconds before accepting new connections, to allow sockets time to reset
+	}
 }

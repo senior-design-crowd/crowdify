@@ -1,0 +1,7 @@
+cmake_minimum_required (VERSION 2.6)
+project (disk-io)
+set(CMAKE_BUILD_TYPE Debug)
+include_directories(/usr/include/mysql/ /usr/local/include/mysql++/)
+link_directories(/home/ormris/src/mongo-cxx-driver/build/linux2/normal/)
+add_executable(sql_conn main.cpp)
+target_link_libraries(sql_conn mhash ssh2 mysqlpp)

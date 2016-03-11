@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <mpi.h>
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+//#define WIN32_LEAN_AND_MEAN
+//#include <Windows.h>
 
 #include <chrono>
 #include <thread>
@@ -19,7 +19,7 @@ void NotifyRootOfMsg(NodeToNodeMsgTypes::NodeToNodeMsgType msgType, int otherNod
 
 int mpiRank, mpiSize, rootRank;
 
-int YourReportHook(int reportType, char *message, int *returnValue)
+/*int YourReportHook(int reportType, char *message, int *returnValue)
 {
 	std::string str = message;
 	int			lineNum = -5;
@@ -30,7 +30,7 @@ int YourReportHook(int reportType, char *message, int *returnValue)
 	MPI_Send((void*)&before, sizeof(bool), MPI_CHAR, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
 
 	return 0;
-}
+}*/
 
 int main(int argc, char* argv[])
 {
@@ -40,14 +40,14 @@ int main(int argc, char* argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 	if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-		while (!IsDebuggerPresent()) {
+		/*while (!IsDebuggerPresent()) {
 			this_thread::sleep_for(chrono::milliseconds(200));
-		}
+		}*/
 	}
 
 	InitMPITypes();
 
-	_CrtSetReportHook(YourReportHook);
+	//_CrtSetReportHook(YourReportHook);
 
 	MPI_Status	mpiStatus;
 	MPI_Recv((void*)&rootRank, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus);

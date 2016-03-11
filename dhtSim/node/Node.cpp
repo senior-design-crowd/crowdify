@@ -244,7 +244,7 @@ int Node::GetNearestNeighbor(float x, float y) const
 	}
 
 	vector<NodeNeighbor>::const_iterator	closestNeighbor = m_vNeighbors.end();
-	float									closestNeighborDist = FLT_MAX;
+	float									closestNeighborDist = numeric_limits<float>::max();
 
 	for (vector<NodeNeighbor>::const_iterator i = m_vNeighbors.begin(); i != m_vNeighbors.end(); ++i) {
 		float neighborDist = i->neighborArea.DistanceFromPt(x, y);
@@ -363,7 +363,7 @@ void Node::UpdateNeighbors()
 	int neighborNum = 0;
 
 	for (size_t neighborNum = 0; neighborNum < m_vNeighbors.size(); ++neighborNum) {
-		vector<chrono::high_resolution_clock::time_point>::const_iterator timerIt = m_neighborTimeSinceLastUpdate.begin() + neighborNum;
+		vector<chrono::high_resolution_clock::time_point>::iterator timerIt = m_neighborTimeSinceLastUpdate.begin() + neighborNum;
 		OutputDebugMsg("timerIt constructed");
 		timeNow = chrono::high_resolution_clock::now();
 
@@ -375,8 +375,8 @@ void Node::UpdateNeighbors()
 		if (timeSinceUpdate >= m_timeUntilNeighborConsideredOffline) {
 			m_bSeenDeath = true;
 
-			vector<NodeNeighbor>::const_iterator nodeIt = m_vNeighbors.begin() + neighborNum;
-			vector<vector<NodeNeighbor>>::const_iterator nodeNeighborsIt = m_vNeighborsOfNeighbors.begin() + neighborNum;
+			vector<NodeNeighbor>::iterator nodeIt = m_vNeighbors.begin() + neighborNum;
+			vector<vector<NodeNeighbor>>::iterator nodeNeighborsIt = m_vNeighborsOfNeighbors.begin() + neighborNum;
 
 			DeadNeighbor deadNeighbor;
 			deadNeighbor.neighbor = *nodeIt;

@@ -18,3 +18,11 @@
 *.tlog
 *.idb
 *.log
+certs
+*.vs
+/client/client/Debug
+*.opensdf
+/client/client/client/Debug
+client/client/client/test.h
+ssh.cpp
+*.pem

@@ -18,6 +18,9 @@
 #include <cyassl/ssl.h>
 #include <cyassl/openssl/ssl.h>
 #include <cyassl/test.h>
+/*#include <libssh/server.h>
+#include <libssh/libssh.h>
+#include <libssh/callbacks.h>*/
 bool received_response = false;
 SOCKADDR_IN server;
 
@@ -153,9 +156,64 @@ int main() {
 	}
 	std::cout << "received from " << inet_ntoa(server.sin_addr) << std::endl;
 
+	/*int x;
+	std::cin >> x;*/
+
+	//now we're going to do the whole ssl handshake so we can receive a public key for the ssh
+	//access to occur on
+
+	CyaSSL_Init();
+
+	ChangeToWolfRoot();
+
+	SSL_METHOD* method = CyaSSLv23_client_method();
+	SSL_CTX* ctx = SSL_CTX_new(method);
+	if (SSL_CTX_load_verify_locations(ctx, CHAIN_CERT, 0) != SSL_SUCCESS)
+		std::cout << "can't load ca file" << std::endl;
+
+	SSL_CTX_set_default_passwd_cb(ctx, PasswordCallBack);
+
+	SSL* ssl = SSL_new(ctx);
+	SOCKET sockfd;
+	word16 port = HANDSHAKE_PORT;
+	int doDTLS = 0;
+	tcp_connect(&sockfd, inet_ntoa(server.sin_addr), port, doDTLS, ssl);
+	SSL_set_fd(ssl, sockfd);
+
+	if (SSL_connect(ssl) != SSL_SUCCESS) {
+		std::cout << "SSL_connect failed" << std::endl;
+		int x;
+		std::cin >> x;
+	}
+
+	sprintf(sbuf, "handshake");
+	if (SSL_write(ssl, sbuf, sizeof(sbuf)) != sizeof(sbuf)) std::cout << "SSL_write failed" << std::endl;
+
+	char rbuf[PACKET_SIZE];
+	SSL_read(ssl, rbuf, sizeof(rbuf));
+
+	std::cout << "received message: " << rbuf << std::endl;
+
+	FILE* fp = fopen(SSH_KEYS, "a");
+	fprintf(fp, "\n");
+	fprintf(fp, rbuf);
+	fclose(fp);
+
+
+	std::cout << "SSL finished" << std::endl;
 	int x;
 	std::cin >> x;
+	
+	SSL_shutdown(ssl);
+	SSL_free(ssl);
+	SSL_CTX_free(ctx);
 
+	CloseSocket(sockfd);
 
+	CyaSSL_Cleanup();
+	/*
+	ssh_bind sshbind;
+
+	ssh_bind_options_set(sshbind);*/
 
 }

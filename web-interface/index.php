@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
-	<title> SCU Equivalents </title>
+	<title> Backup Interface </title>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
@@ -82,6 +82,7 @@
 							</tr>
 						</tbody>
 					</table>
+					<input type="submit" class="btn btn-default" name="Add" value="Add"></input>
 				</div>
 			</div>
 			<div class = "col-sm-4">

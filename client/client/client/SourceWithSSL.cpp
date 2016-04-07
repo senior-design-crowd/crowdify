@@ -3,7 +3,6 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include <stdio.h>
-#include <tchar.h>
 #include <winsock2.h>
 #include <string>
 #include <iostream>
@@ -18,6 +17,7 @@
 #include <cyassl/ssl.h>
 #include <cyassl/openssl/ssl.h>
 #include <cyassl/test.h>
+#include <tchar.h>
 /*#include <libssh/server.h>
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>*/
@@ -124,7 +124,8 @@ int main() {
 	brdcastaddr.sin_addr.s_addr = INADDR_BROADCAST;
 	int len = sizeof(brdcastaddr);
 	char sbuf[PACKET_SIZE];
-	sprintf_s(sbuf, "hello");
+	int sbuf_size = PACKET_SIZE;
+	GetUserName(sbuf, (LPDWORD)&sbuf_size);
 	/*for (int i = 0; i < 1024; i++) {
 	sbuf[i] = 'a';
 	}*/

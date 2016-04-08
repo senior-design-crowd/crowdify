@@ -10,10 +10,8 @@
 *.bib
 *.blg
 *.sdf
-*.sln
 *.lib
 *.pdb
-*.vcxproj
 *.filters
 *.tlog
 *.idb

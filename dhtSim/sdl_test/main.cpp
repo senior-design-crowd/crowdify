@@ -1,8 +1,8 @@
 #include <SDL.h>
 #include <mpi.h>
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+//#define WIN32_LEAN_AND_MEAN
+//#include <Windows.h>
 
 #include <stdio.h>
 #include <string>
@@ -30,11 +30,11 @@ int main(int argc, char* argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiNumNodes);
 
-	if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+	/*if (argc > 1 && strcmp(argv[1], "-d") == 0) {
 		while (!IsDebuggerPresent()) {
 			this_thread::sleep_for(chrono::milliseconds(200));
 		}
-	}
+	}*/
 
 	InitMPITypes();
 

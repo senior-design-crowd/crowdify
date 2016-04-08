@@ -15,6 +15,7 @@
 #include <cyassl/ctaocrypt/settings.h>
 #include <cyassl/ssl.h>
 #include <cyassl/test.h>
+#include "../disk-read-ng/configsql.h"
 
 
 #define FAIL -1
@@ -50,16 +51,17 @@ int main(int argc, char *argv[])
    exit(1);
    }
      
-      struct sockaddr_in cliaddr;      
+      struct sockaddr_in cliaddr;   
+	char *ip;   
+	char packet_data[PACKET_SIZE];
     while ( 1 )
-    {
-      char packet_data[PACKET_SIZE];   
+    { 
 
       socklen_t len= sizeof(cliaddr); 
       int received_bytes = recvfrom( handle, packet_data, sizeof(packet_data),0, (struct sockaddr*)&cliaddr, &len );
       if ( received_bytes > 0 ){
 	//received the broadcast
-	char *ip = inet_ntoa(((sockaddr_in)cliaddr).sin_addr);
+	ip = inet_ntoa(((sockaddr_in)cliaddr).sin_addr);
        printf("Here is the message: %s, received from %s\n",packet_data, ip);
 	break;
 	}
@@ -125,6 +127,8 @@ int main(int argc, char *argv[])
 	FILE *fp = fopen(SSH_KEY, "r");
 	fgets(reply, PACKET_SIZE, fp);
 	CyaSSL_write(ssl, reply, sizeof(reply));
+
+	ClientConfig* cc = new ClientConfig(ip, packet_data, "");
 
 	CyaSSL_shutdown(ssl);
 	CyaSSL_free(ssl);

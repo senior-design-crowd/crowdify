@@ -14,3 +14,21 @@
 input.time{
 	width: 80px;
 }
+
+.text{
+	width: 100%;
+}
+
+#save{
+	position: absolute;
+	right: 10px;
+	top: 5px;
+}
+
+.page-header{
+	position: relative;
+}
+
+.highlight{background: yellow;}
+
+tr { cursor: default; }

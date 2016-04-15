@@ -11,11 +11,116 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<link rel="stylesheet" href="jquery.timepicker.css">
 	<script src="jquery.timepicker.js"></script>
+	<script>
+	//this function is for the directories to backup table
+	
+	var dirs_for_date;
+	$(function() {
+
+		/* Get all rows from your 'table' but not the first one 
+		 * that includes headers. */
+		var rows = $('.dirs_to_backup');
+
+		/* Create 'click' event handler for rows */
+		rows.on('click', function(e) {
+
+			/* Get current row */
+			var row = $(this);
+
+			/* Check if 'Ctrl', 'cmd' or 'Shift' keyboard key was pressed
+			 * 'Ctrl' => is represented by 'e.ctrlKey' or 'e.metaKey'
+			 * 'Shift' => is represented by 'e.shiftKey' */
+			if(row.hasClass('highlight')){
+				row.removeClass('highlight');
+			}
+			else{
+			if ((e.ctrlKey || e.metaKey) || e.shiftKey) {
+				/* If pressed highlight the other row that was clicked */
+				row.addClass('highlight');
+			} else {
+				/* Otherwise just highlight one row and clean others */
+				rows.removeClass('highlight');
+				row.addClass('highlight');
+			}
+			}
+
+		});
+	}
+	);
+		
+		
+		//this function is for the dates table
+		$(function() {
+
+		/* Get all rows from your 'table'*/
+		var rows = $('.dates');
+
+		/* Create 'click' event handler for rows */
+		rows.on('click', function(e) {
+
+			/* Get current row */
+			var row = $(this);
+
+			if(row.hasClass('highlight')){
+				row.removeClass('highlight');
+			}
+			else{
+			
+				/* Otherwise just highlight one row and clean others */
+				rows.removeClass('highlight');
+				row.addClass('highlight');
+			}
+			
+			//now use ajax to load the directory information for that date
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function(){
+				if(xhttp.readyState == 4 && xhttp.status == 200){
+					dirs_for_date = xhttp.responseText;
+					set_restore_dirs();
+				}
+			};
+			xhttp.open("POST", "dirs_for_date.php", true);
+			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			var date = row.find('td:eq(0)').html();
+			xhttp.send("date=" + date);
+			});
+
+		});
+	
+		function set_restore_dirs(){
+			var new_tbody = document.createElement('tbody');
+			var dirs = dirs_for_date.split(",");
+			for(var i = 0; i < dirs.length; i++){
+				var newRow = new_tbody.insertRow(0);
+				var newCell = newRow.insertCell(0);
+				var newText = document.createTextNode(dirs[i]);
+				newCell.appendChild(newText);
+			}
+			$(new_tbody).attr("id", "dirs_to_restore");
+			var old_tbody = document.getElementById('dirs_to_restore');
+			old_tbody.parentNode.replaceChild(new_tbody, old_tbody);
+		}
+		function add(){
+			var new_dir = document.getElementById("add_dir").value;
+			if (new_dir == "") return;
+			var tbody = document.getElementById('dirs_to_backup');
+			var newRow = tbody.insertRow(0);
+			var newCell = newRow.insertCell(0);
+			var newText = document.createTextNode(new_dir);
+			newCell.appendChild(newText);
+			document.getElementById("add_dir").value = "";
+		}
+		function registerHandlers(){
+			//document.getElementById("Add").onclick = add();
+			$('#Add').on('click', add);
+		}
+	</script>
 </head>
-<body>
+<body onload="registerHandlers()">
 	<div class = "container-fluid">
 		<div class = "page-header">
 			<h1> Backup Settings </h1>
+			<input id= "save" type="submit" class="btn btn-default" name="Save Settings" value = "Save Settings"></input>
 		</div>
 		<div class = "row">
 			<div class = "col-sm-4">
@@ -23,66 +128,47 @@
 					Choose Folders
 				</h2>
 				<div id="t1" class="tableholder">
-					<table class="table table-striped">
+					<table class="table" id="dirs_to_backup">
 						<tbody>
-							<tr>
-								<td>C:\documents\school\..</td>
-							</tr>
-							<tr>
-								<td>C:\music\..</td>
-							</tr>
-							<tr>
-								<td>C:\pictures\vacation\..</td>
-							</tr>
-							<tr>
-								<td>C:\documents\career\..</td>
-							</tr>
-							<tr>
-								<td>C:\history\essay1\..</td>
-							</tr>
-							<tr>
-								<td>C:\games\battlefront\..</td>
-							</tr>
-							<tr>
-								<td>C:\games\call_of_duty\..</td>
-							</tr>
-							<tr>
-								<td>C:\games\minesweeper\records\..</td>
-							</tr>
-							<tr>
-								<td>C:\projects\programming\algorithms\..</td>
-							</tr>
-							<tr>
-								<td>C:\projects\programming\graphics\..</td>
-							</tr>
-							<tr>
-								<td>C:\projects\programming\games\..</td>
-							</tr>
-							<tr>
-								<td>C:\projects\music\edm\..</td>
-							</tr>
+							<?php
+								$fp = fopen("files.txt", "r");
+								$data = "";
+								$data = fgets($fp);
+								$dirs = explode(',', $data);
+								foreach($dirs as $itemName){
+									echo "<tr class='dirs_to_backup'><td>$itemName</td></tr>";
+								}
+								?>
 						</tbody>
 					</table>
 				</div>
+				<input id = "add_dir" class ="text" type="text"/>
 				<div class="row folderbuttonrow">
-					<input type="submit" class="btn btn-default" name="Add" value = "Add"></input>
-					<input type="submit" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
+					<input id="Add" type="button" class="btn btn-default" name="Add" value = "Add"></input>
+					<input type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
 				</div>
 				<h2>
 					Excludes
 				</h2>
 				<div id="t1" class="tableholder">
-					<table class="table table-striped">
+					<table class="table">
 						<tbody>
-							<tr>
-								<td>..*\.bak</td>
-							</tr>
-							<tr>
-								<td>~..*</td>
-							</tr>
+							<?php
+							$fp = fopen("excludes.txt", "r");
+							$data = "";
+							$data = fgets($fp);
+							$dirs = explode(',', $data);
+							foreach($dirs as $itemName){
+								echo "<tr class='excludes'><td>$itemName</td></tr>";
+							}
+							?>
 						</tbody>
 					</table>
-					<input type="submit" class="btn btn-default" name="Add" value="Add"></input>
+				</div>
+				<input id = "add_ex" class ="text" type="text"/>
+				<div class="row folderbuttonrow">
+				<input type="submit" class="btn btn-default" name="Add" value="Add"></input>
+				<input type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
 				</div>
 			</div>
 			<div class = "col-sm-4">
@@ -121,33 +207,17 @@
 				</div>
 				<div class="row">
 				<div id="t1" class="tableholder">
-					<table class="table table-striped">
+					<table class="table">
 						<tbody>
-							<tr>
-								<td>11/19/2016</td>
-							</tr>
-							<tr>
-								<td>11/16/2016</td>
-							</tr>
-							<tr>
-								<td>11/13/2016</td>
-							</tr>
-							<tr>
-								<td>11/10/2016</td>
-							</tr>
-							<tr>
-								<td>11/13/2016</td>
-							</tr>
-							<tr>
-								<td>11/10/2016</td>
-							</tr>
-							<tr>
-								<td>11/07/2016</td>
-							</tr>
-							
-							<tr>
-								<td>11/04/2016</td>
-							</tr>
+							<?php
+								$fp = fopen("dates.txt", "r");
+								$data = "";
+								$data = fgets($fp);
+								$dirs = explode(',', $data);
+								foreach($dirs as $itemName){
+									echo "<tr class='dates'><td>$itemName</td></tr>";
+								}
+							?>
 						</tbody>
 					</table>
 				</div>
@@ -159,8 +229,8 @@
 				</div>
 				<div class="row">
 				<div id="t1" class="tableholder">
-					<table class="table table-striped">
-						<tbody>
+					<table class="table">
+						<tbody id="dirs_to_restore">
 							<tr>
 								<td>C:\documents\school\..</td>
 							</tr>
@@ -207,7 +277,7 @@
 					</div>
 				</div>
 				<div class="row">
-					<input type="submit" class="btn btn-default" name="Restore" value = "Restore"></input>
+					<input id="restore" type="submit" class="btn btn-default" name="Restore Now" value = "Restore Now"></input>
 				</div>
 			</div>
 		</div>

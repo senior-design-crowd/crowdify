@@ -95,6 +95,9 @@ DWORD WINAPI ReceiveResponse(LPVOID lpArg)
 
 void init(void) {
 	memset(&server, 0, sizeof(server));
+	FILE* fp = fopen("status.txt", "w+");
+	fprintf(fp, "connecting\n");
+	fclose(fp);
 }
 
 int main() {
@@ -212,6 +215,19 @@ int main() {
 	CloseSocket(sockfd);
 
 	CyaSSL_Cleanup();
+
+
+	fp = fopen("web_interface.url", "w+");
+	fprintf(fp, "[InternetShortcut]");
+	fprintf(fp, "\n");
+	fprintf(fp, "URL=");
+	fprintf(fp, inet_ntoa(server.sin_addr));
+	fprintf(fp, "/index.php");
+	fclose(fp);
+
+	fp = fopen("status.txt", "w+");
+	fprintf(fp, "ready\n");
+	fclose(fp);
 	/*
 	ssh_bind sshbind;
 

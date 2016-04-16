@@ -15,6 +15,10 @@
 	//this function is for the directories to backup table
 	
 	var dirs_for_date;
+	var added = new Array();
+	var removed = new Array();
+	var user = "<?php echo $GET_['user']?>";
+	var addr = "<?php echo $_SERVER['REMOTE_ADDR']?>";
 	$(function() {
 
 		/* Get all rows from your 'table' but not the first one 
@@ -103,6 +107,7 @@
 		function add(){
 			var new_dir = document.getElementById("add_dir").value;
 			if (new_dir == "") return;
+			added.push(new_dir);
 			var tbody = document.getElementById('dirs_to_backup');
 			var newRow = tbody.insertRow(0);
 			var newCell = newRow.insertCell(0);
@@ -110,9 +115,35 @@
 			newCell.appendChild(newText);
 			document.getElementById("add_dir").value = "";
 		}
+		function save(){
+			var added_string;
+			if(added.length == 0) return;
+			else added_string = added[0];
+			
+			var i;
+			for(i = 1; i < added.length;i++){
+				added_string += ",";
+				added_string += added[i];
+			}
+			
+			console.log(added_string);
+
+			
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function(){
+				if(xhttp.readyState == 4 && xhttp.status == 200){
+					alert("save successful");
+				}
+			};
+			xhttp.open("POST", "save.php", true);
+			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhttp.send("add=" + added_string + "&user=" + user + "&addr=" + addr);
+			
+		}
 		function registerHandlers(){
 			//document.getElementById("Add").onclick = add();
 			$('#Add').on('click', add);
+			$('#save').on('click', save);
 		}
 	</script>
 </head>

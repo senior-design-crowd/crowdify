@@ -11,7 +11,7 @@ class ClientConfig {
 	Connection *con;
 	public:
 	ClientConfig(char *addr, char *username, char *passwd) {
-		con = new Connection("crowdify", "localhost", "root", "root");
+		con = new Connection("crowdify", "localhost", "root", "sql");
 
 		int iaddr = inet_addr(addr);
 

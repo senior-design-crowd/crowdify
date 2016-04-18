@@ -1,7 +1,11 @@
 #include <iostream>
-#include <mysqlpp.h>
+#include <mysql++.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 using namespace mysqlpp;
+using namespace std;
 
 Connection c;
 
@@ -40,15 +44,18 @@ insert_test_data()
 {
 	Query q = c.query();
 	q << "INSERT INTO clients VALUES(NULL," << inet_addr("127.0.0.1") << ");";
-	int cid = q.exec().insert_id();
+	q.exec();
+	int cid = q.insert_id();
 
 	q = c.query();
 	q << "INSERT INTO files VALUES(NULL, \"/home/pi/crowdify/crowdify/disk-read-nxt/test\", 0," << cid << ", 0, 0, 0, 0);";
-	int fid = q.exec().insert_id();	
+	q.exec();
+	int fid = q.insert_id();	
 
 	q = c.query();
 	q << "INSERT INTO jobs VALUES(NULL, " << cid << ", 0, 0, 0, 0, 0);";
-	int jid = q.exec().insert_id();	
+	q.exec();
+	int jid = q.insert_id();	
 
 	q = c.query();
 	q << "INSERT INTO jtof VALUES(" << jid << "," << fid << ");";
@@ -58,15 +65,46 @@ insert_test_data()
 }
 
 int
+data_compare_ctime(Row *f1, Row *f2)
+{
+	return 0;
+}
+
+int
+data_cd(int fid)
+{
+	return 0;
+}
+
+int
+data_ls()
+{
+	return 0;
+}
+int
+data_exists()
+{
+	return 0;
+}
+
+int
+init_connection()
+{
+	c.connect("crowdify", "127.0.0.1", "root", "root");
+
+	return 0;
+}
+
+int
 exec_current_job()
 {
 	
-	Query q = c.store("SELECT * FROM jobs;");
+	Query q = c.query("SELECT * FROM jobs;");
 	StoreQueryResult store = q.store();
 
 	if (store) {
-		for (size_t i = 0; i < res.num_rows(); i++) {
-			cout << res[i]["id"] << "," << res[i]["cid"] << "," << res[i]["year"] << "," << res[i]["year"] << "," << res[i]["month"] << "," << res[i]["day"] << "," << res[i]["hour"] << "," << res[i]["day"] << "," << res[i]["minute"] << endl;
+		for (size_t i = 0; i < store.num_rows(); i++) {
+			cout << store[i]["id"] << "," << store[i]["cid"] << "," << store[i]["year"] << "," << store[i]["year"] << "," << store[i]["month"] << "," << store[i]["day"] << "," << store[i]["hour"] << "," << store[i]["day"] << "," << store[i]["minute"] << endl;
 		}
 	}
 	return 0;
@@ -75,5 +113,9 @@ exec_current_job()
 int
 main()
 {
+	init_connection();
+	init_tables();
+	insert_test_data();
+	exec_current_job();
 	return 0;
 }

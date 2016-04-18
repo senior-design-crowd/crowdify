@@ -5,27 +5,6 @@
 #include "../disk-read-ng/configsql.h"
 
 
-void main(int argc, char *argv[]){
-	char* add_dirs_string = argv[1];
-	char* userName = argv[2];
-	char* addr = argv[3];
-	char** dirs;
-	
-	dirs = str_split(add_dirs_string, ',');
-
-    if (dirs)
-    {
-		ClientConfig* cc = new ClientConfig(addr, userName);
-        int i;
-        for (i = 0; *(dirs + i); i++)
-        {
-			cc->insertDirectory(*(dirs + i));
-            free(*(dirs + i));
-        }
-        free(dirs);
-    }
-}
-
 char** str_split(char* a_str, const char a_delim)
 {
     char** result    = 0;
@@ -54,7 +33,7 @@ char** str_split(char* a_str, const char a_delim)
        knows where the list of returned strings ends. */
     count++;
 
-    result = malloc(sizeof(char*) * count);
+    result = (char**) malloc(sizeof(char*) * count);
 
     if (result)
     {
@@ -72,4 +51,25 @@ char** str_split(char* a_str, const char a_delim)
     }
 
     return result;
+}
+
+int main(int argc, char *argv[]){
+	char* add_dirs_string = argv[1];
+	char* userName = argv[2];
+	char* addr = argv[3];
+	char** dirs;
+	
+	dirs = str_split(add_dirs_string, ',');
+
+    if (dirs)
+    {
+		ClientConfig* cc = new ClientConfig(addr, userName);
+        int i;
+        for (i = 0; *(dirs + i); i++)
+        {
+			cc->insertDirectory(*(dirs + i));
+            free(*(dirs + i));
+        }
+        free(dirs);
+    }
 }

@@ -10,8 +10,8 @@ class ClientConfig {
 	int cid, did, jid;
 	Connection *con;
 	public:
-	ClientConfig(char *addr, char *username, char *passwd) {
-		con = new Connection("crowdify", "localhost", "root", "root");
+	ClientConfig(char *addr, char *username) {
+		con = new Connection("crowdify", "localhost", "root", "sql");
 
 		int iaddr = inet_addr(addr);
 
@@ -30,11 +30,11 @@ class ClientConfig {
 		}
 
 		catch(const mysqlpp::BadQuery& e) {
-			Query q = con->query("CREATE TABLE IF NOT EXISTS clients (cid INT AUTO_INCREMENT PRIMARY KEY NOT NULL, ip BIGINT, username VARCHAR(32), password VARCHAR(16));");
+			Query q = con->query("CREATE TABLE IF NOT EXISTS clients (cid INT AUTO_INCREMENT PRIMARY KEY NOT NULL, ip BIGINT, username VARCHAR(32));");
 			q.execute();
 
 			stringstream q2;
-			q2 << "INSERT INTO TABLE clients (NULL," << iaddr << "," << username << "," << passwd << ");";
+			q2 << "INSERT INTO TABLE clients (NULL," << iaddr << "," << username << ");";
 			q = con->query(q2.str());
 			cid = q.execute().insert_id();
 		}

@@ -55,6 +55,7 @@ char** str_split(char* a_str, const char a_delim)
 
 int main(int argc, char *argv[]){
 	char* add_dirs_string = argv[1];
+<<<<<<< HEAD
 	char* remove_dirs_string = argv[2];
 	char* add_ex_string = argv[3];
 	char* remove_ex_string = argv[4];

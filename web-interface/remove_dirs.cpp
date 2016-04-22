@@ -5,6 +5,45 @@
 #include "../disk-read-ng/configsql.h"
 
 
+void main(int argc, char *argv[]){
+	char* add_dirs_string = argv[1];
+	char* remove_dirs_string = argv[2];
+	char* userName = argv[3];
+	char* addr = argv[4];
+	char** add_dirs;
+	char** remove_dirs;
+	
+	add_dirs = str_split(add_dirs_string, ',');
+	remove_dirs = str_split(remove_dirs_string, ',');
+
+	printf("In mod_dirs\n");
+
+    if (add_dirs)
+    {
+		ClientConfig* cc = new ClientConfig(addr, userName);
+        int i;
+        for (i = 0; *(dirs + i); i++)
+        {
+			cc->insertDirectory(*(add_dirs + i));
+		printf("Added %s\n", *(add_dirs + i));
+            free(*(add_dirs + i));
+        }
+        free(add_dirs);
+    }
+	if (remove_dirs)
+    {
+		ClientConfig* cc = new ClientConfig(addr, userName);
+        int i;
+        for (i = 0; *(remove_dirs + i); i++)
+        {
+			cc->removeDirectory(*(remove_dirs + i));
+		printf("Added %s\n", *(remove_dirs + i));
+            free(*(remove_dirs + i));
+        }
+        free(remove_dirs);
+    }
+}
+
 char** str_split(char* a_str, const char a_delim)
 {
     char** result    = 0;
@@ -33,7 +72,7 @@ char** str_split(char* a_str, const char a_delim)
        knows where the list of returned strings ends. */
     count++;
 
-    result = (char**) malloc(sizeof(char*) * count);
+    result = malloc(sizeof(char*) * count);
 
     if (result)
     {
@@ -51,34 +90,4 @@ char** str_split(char* a_str, const char a_delim)
     }
 
     return result;
-}
-
-int main(int argc, char *argv[]){
-	char* add_dirs_string = argv[1];
-	char* remove_dirs_string = argv[2];
-	char* add_ex_string = argv[3];
-	char* remove_ex_string = argv[4];
-	char* date_and_time = argv[5];
-	char* userName = argv[6];
-	char* addr = argv[7];
-	char** dirs;
-	
-	dirs = str_split(add_dirs_string, ',');
-	rdirs = str_split(remove_dirs_string, ',');
-
-	printf("In add_dirs\n");
-
-    if (dirs)
-    {
-		ClientConfig* cc = new ClientConfig(addr, userName);
-        int i;
-        for (i = 0; *(dirs + i); i++)
-        {
-			cc->insertDirectory(*(dirs + i));
-		printf("Added %s\n", *(dirs + i));
-            free(*(dirs + i));
-        }
-        free(dirs);
-    }
-	return 0;
 }

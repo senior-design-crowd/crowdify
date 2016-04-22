@@ -4,13 +4,15 @@
 #define RECEIVE_PORT "1235"
 //#define CHAIN_CERT "../../certs/ca-chain.cert.pem"
 //#define CHAIN_CERT "../../certs/www.example.com.cert.pem"
-#define CHAIN_CERT "../../certs/ca-cert.pem"
+//#define CHAIN_CERT "../../certs/ca-cert.pem"
+#define CHAIN_CERT "certs/ca-cert.pem"
 
 
 #define SSHD_USER "libssh"
 #define SSHD_PASSWORD "libssh"
-#define KEYS_FOLDER "../../certs/"
-#define SSH_KEYS "C:\\Users\\Eric\\.ssh\\authorized_keys"
+//#define KEYS_FOLDER "../../certs/"
+#define KEYS_FOLDER "certs/"
+//#define SSH_KEYS "C:\\Users\\Eric\\.ssh\\authorized_keys"
 
 const int UDP_BROADCAST_PORT = 1234;
 const int PACKET_SIZE = 8096;

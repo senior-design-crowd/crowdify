@@ -16,20 +16,29 @@
 	
 	var dirs_for_date;
 	var added = new Array();
+	var added_ex = new Array();
 	var removed = new Array();
-	var user = "<?php echo $GET_['user']?>";
+	var removed_ex = new Array();
+	var user = "<?php echo $_GET['user']?>";
 	var addr = "<?php echo $_SERVER['REMOTE_ADDR']?>";
+	
 	$(function() {
-
-		/* Get all rows from your 'table' but not the first one 
-		 * that includes headers. */
-		var rows = $('.dirs_to_backup');
-
-		/* Create 'click' event handler for rows */
-		rows.on('click', function(e) {
-
+		makeClassHighlightable('.dirs_to_backup_class');
+		makeClassHighlightable('.excludes_class');
+		makeClassHighlightable('.dirs_to_restore_class');
+	}
+	);
+	
+	function makeClassHighlightable(Class){
+		var rows = $(Class);
+		rows.on('click', makeMake(Class));
+	}
+	
+	function makeMake(Class){
+		return function(e){
 			/* Get current row */
 			var row = $(this);
+			var rows = $(Class);
 
 			/* Check if 'Ctrl', 'cmd' or 'Shift' keyboard key was pressed
 			 * 'Ctrl' => is represented by 'e.ctrlKey' or 'e.metaKey'
@@ -48,12 +57,36 @@
 			}
 			}
 
-		});
+		}
 	}
-	);
+	
+	function makeHighlightable(e) {
+
+			/* Get current row */
+			var row = $(this);
+			var rows = $('.dirs_to_backup');
+
+			/* Check if 'Ctrl', 'cmd' or 'Shift' keyboard key was pressed
+			 * 'Ctrl' => is represented by 'e.ctrlKey' or 'e.metaKey'
+			 * 'Shift' => is represented by 'e.shiftKey' */
+			if(row.hasClass('highlight')){
+				row.removeClass('highlight');
+			}
+			else{
+			if ((e.ctrlKey || e.metaKey) || e.shiftKey) {
+				/* If pressed highlight the other row that was clicked */
+				row.addClass('highlight');
+			} else {
+				/* Otherwise just highlight one row and clean others */
+				rows.removeClass('highlight');
+				row.addClass('highlight');
+			}
+			}
+
+		}
 		
 		
-		//this function is for the dates table
+		//this function is for the dates table, IS DIFFERENT BECAUSE YOU CAN ONLY SELECT ONE DATE AT A TIME
 		$(function() {
 
 		/* Get all rows from your 'table'*/
@@ -96,6 +129,7 @@
 			var dirs = dirs_for_date.split(",");
 			for(var i = 0; i < dirs.length; i++){
 				var newRow = new_tbody.insertRow(0);
+				newRow.className += 'dirs_to_restore_class';
 				var newCell = newRow.insertCell(0);
 				var newText = document.createTextNode(dirs[i]);
 				newCell.appendChild(newText);
@@ -104,29 +138,102 @@
 			var old_tbody = document.getElementById('dirs_to_restore');
 			old_tbody.parentNode.replaceChild(new_tbody, old_tbody);
 		}
+		function add_in_table(t, value, Class){
+			var tbody = document.getElementById(t);
+			var newRow = tbody.insertRow(0);
+			var newCell = newRow.insertCell(0);
+			var newText = document.createTextNode(value);
+			newCell.appendChild(newText);
+			newRow.addEventListener('click', makeMake(Class));
+		}
 		function add(){
 			var new_dir = document.getElementById("add_dir").value;
 			if (new_dir == "") return;
 			added.push(new_dir);
-			var tbody = document.getElementById('dirs_to_backup');
-			var newRow = tbody.insertRow(0);
-			var newCell = newRow.insertCell(0);
-			var newText = document.createTextNode(new_dir);
-			newCell.appendChild(newText);
-			document.getElementById("add_dir").value = "";
+			add_in_table('dirs_to_backup', new_dir, '.dirs_to_backup_class');
+			document.getElementById('add_dir').value = "";
+		}
+		function add_ex(){
+			var new_ex = document.getElementById('add_ex').value;
+			if (new_ex == "") return;
+			added_ex.push(new_ex);
+			add_in_table('excludes', new_ex, '.excludes_class');
+			document.getElementById('add_ex').value = "";
 		}
 		function save(){
 			var added_string;
-			if(added.length == 0) return;
-			else added_string = added[0];
+			if(added.length == 0) added_string = "";
+			else
+			{
+				added_string = added[0];
 			
-			var i;
-			for(i = 1; i < added.length;i++){
-				added_string += ",";
-				added_string += added[i];
+				var i;
+				for(i = 1; i < added.length;i++){
+					added_string += ",";
+					added_string += added[i];
+				}
 			}
 			
+			var removed_string;
+			if(removed.length == 0) removed_string = "";
+			else{
+				removed_string = removed[0];
+				var i;
+				for(i = 1; i < removed.length; i++){
+					removed_string += ",";
+					removed_string += added[i];
+				}
+			}
+			
+			var added_excludes_string;
+			if(added_ex.length == 0) added_excludes_string = "";
+			else{
+				added_excludes_string = added_ex[0];
+				var i;
+				for(i = 1; i < added_ex.length; i++){
+					added_excludes_string += ",";
+					added_excludes_string += added_ex[i];
+				}
+			}
+			
+			var removed_excludes_string;
+			if(removed_ex.length == 0) removed_excludes_string = "";
+			else{
+				removed_excludes_string = removed_ex[0];
+				var i;
+				for(i = 1; i < removed_ex.length; i++){
+					removed_excludes_string += ",";
+					removed_excludes_string += removed_ex[i];
+				}
+			}
+			
+			var date_and_time_defined = true;
+			var date = document.getElementById('start_date').value;
+			if(date == "") date_and_time_defined = false;
+			var time = document.getElementById('time').value;
+			if(time == "") date_and_time_defined = false;
+			
+			date.replace("/", "-");
+			
+			var am_or_pm = time.toString().slice(6, 8);
+			time = time.toString().slice(0,5);
+			if(am_or_pm == "PM"){
+				var hour = time.slice(0,2);
+				var minute = time.slice(2,5);
+				
+				var new_hour = Number(hour) + 12;
+				time = new_hour + minute;
+			}
+			
+			date_and_time = date + " " + time;
+			
+			if(!date_and_time_defined) date_and_time = "UNDEFINED";
+			
 			console.log(added_string);
+			console.log(removed_string);
+			console.log(added_excludes_string);
+			console.log(removed_excludes_string);
+			console.log(date_and_time);
 
 			
 			var xhttp = new XMLHttpRequest();
@@ -137,13 +244,115 @@
 			};
 			xhttp.open("POST", "save.php", true);
 			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			xhttp.send("add=" + added_string + "&user=" + user + "&addr=" + addr);
+			xhttp.send("add=" + added_string + "&remove=" + removed_string + "&add_ex=" + added_excludes_string + "&remove_ex=" + removed_excludes_string + "&dateAndTime" + date_and_time + "&user=" + user + "&addr=" + addr);
 			
+			added = [];
+			removed = [];
+			
+		}
+		function backup_now(){
+			save();
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function(){
+				if(xhttp.readyState == 4 && xhttp.status == 200){
+					alert("backup started");
+				}
+			};
+			xhttp.open("POST", "backup_now.php", true);
+			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhttp.send("user=" + user + "&addr=" + addr);
+		}
+		function restore_now(){
+			var table0 = document.getElementById('dates_table');
+			var date;
+			for(var i = 0, row; row = table0.rows[i]; i++){
+				if(hasClass(row, 'highlight')){
+					date = row.cells[0].innerHTML;
+					break;
+				}
+			}
+			var table = document.getElementById('dirs_to_restore');
+			var list_of_dirs_to_backup = new Array();
+			var restore_all = document.getElementById('restore_all').checked;
+			for(var i=0, row; row = table.rows[i]; i++){
+				if(hasClass(row, 'highlight') || restore_all){
+					var dir = row.cells[0].innerHTML;
+					list_of_dirs_to_backup.push(dir);
+				}
+			}
+			var dirs_to_backup_string = "";
+			for(var i = 0; i < list_of_dirs_to_backup.length; i++){
+				if(i != 0) dirs_to_backup_string += ',';
+				dirs_to_backup_string += list_of_dirs_to_backup[i];
+			}
+			
+			console.log(date);
+			console.log(dirs_to_backup_string);
+			
+			if((date == undefined) || (dirs_to_backup_string == "")){
+				alert("No directories selected to restore!");
+			}
+			else{
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function(){
+				if(xhttp.readyState == 4 && xhttp.status == 200){
+					alert("save successful");
+				}
+			};
+			xhttp.open("POST", "restore.php", true);
+			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+			xhttp.send("date=" + date + "&dirs=" + dirs_to_backup_string + "&user=" + user + "&addr=" + addr);
+			}
+		}
+		function remove(){
+			var table = document.getElementById('dirs_to_backup');
+			for(var i = 0, row; row = table.rows[i]; i++){
+				if(hasClass(row, 'highlight')){
+					var was_just_added = false;
+					var dir_to_remove = row.cells[0].innerHTML;
+					for(var j = 0; j < added.length; j++){
+						if(added[j] == dir_to_remove) added.splice(j, 1);
+						was_just_added = true;
+					}
+					if(!was_just_added)removed.push(dir_to_remove);
+					table.deleteRow(i);
+				}
+			}
+			//go through the list and put all highlighted items into the remove array
+			//remove those from the display
+			//check if those items are in the added array, if so remove them
+		}
+		function remove_ex(){
+			var table = document.getElementById('excludes');
+			for(var i = 0, row; row = table.rows[i]; i++){
+				if(hasClass(row, 'highlight')){
+					var ex_to_remove = row.cells[0].innerHTML;
+					var was_just_added = false;
+					for(var j = 0; j < added.length; j++){
+						if(added_ex[j] == ex_to_remove) added_ex.splice(j, 1);
+						was_just_added = true;
+					}
+					if(!was_just_added)removed_ex.push(ex_to_remove);
+					table.deleteRow(i);
+				}
+			}
+			//go through the list and put all highlighted items into the remove array
+			//remove those from the display
+			//check if those items are in the added array, if so remove them
 		}
 		function registerHandlers(){
 			//document.getElementById("Add").onclick = add();
 			$('#Add').on('click', add);
 			$('#save').on('click', save);
+			$('#Remove').on('click', remove);
+			$('#Add_Ex').on('click', add_ex);
+			$('#Remove_Ex').on('click', remove_ex);
+			$('#backup_now').on('click', backup_now);
+			$('#restore').on('click', restore_now);
+		}
+		
+		function hasClass( elem, klass ) {
+			return (" " + elem.className + " " ).indexOf( " "+klass+" " ) > -1;
 		}
 	</script>
 </head>
@@ -151,7 +360,7 @@
 	<div class = "container-fluid">
 		<div class = "page-header">
 			<h1> Backup Settings </h1>
-			<input id= "save" type="submit" class="btn btn-default" name="Save Settings" value = "Save Settings"></input>
+			<input id= "save" type="button" class="btn btn-default" name="Save Settings" value = "Save Settings"></input>
 		</div>
 		<div class = "row">
 			<div class = "col-sm-4">
@@ -167,7 +376,7 @@
 								$data = fgets($fp);
 								$dirs = explode(',', $data);
 								foreach($dirs as $itemName){
-									echo "<tr class='dirs_to_backup'><td>$itemName</td></tr>";
+									echo "<tr class='dirs_to_backup_class'><td>$itemName</td></tr>";
 								}
 								?>
 						</tbody>
@@ -176,13 +385,13 @@
 				<input id = "add_dir" class ="text" type="text"/>
 				<div class="row folderbuttonrow">
 					<input id="Add" type="button" class="btn btn-default" name="Add" value = "Add"></input>
-					<input type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
+					<input id="Remove" type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
 				</div>
 				<h2>
 					Excludes
 				</h2>
 				<div id="t1" class="tableholder">
-					<table class="table">
+					<table class="table" id="excludes">
 						<tbody>
 							<?php
 							$fp = fopen("excludes.txt", "r");
@@ -190,7 +399,7 @@
 							$data = fgets($fp);
 							$dirs = explode(',', $data);
 							foreach($dirs as $itemName){
-								echo "<tr class='excludes'><td>$itemName</td></tr>";
+								echo "<tr class='excludes_class'><td>$itemName</td></tr>";
 							}
 							?>
 						</tbody>
@@ -198,8 +407,8 @@
 				</div>
 				<input id = "add_ex" class ="text" type="text"/>
 				<div class="row folderbuttonrow">
-				<input type="submit" class="btn btn-default" name="Add" value="Add"></input>
-				<input type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
+				<input id="Add_Ex" type="button" class="btn btn-default" name="Add" value="Add"></input>
+				<input id="Remove_Ex" type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
 				</div>
 			</div>
 			<div class = "col-sm-4">
@@ -214,7 +423,7 @@
 				</h3>
 				</div>
 				<div class="row">
-					<input type="date">
+					<input id="start_date" type="date">
 					<input id="time" type="text" class="time" />
 				</div>
 				
@@ -222,7 +431,14 @@
 					$('#time').timepicker({ 'timeFormat': 'h:i A' });
 				</script>
 				<div class="row">
-					<h3> Repeats every <select class='dropdown'><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select> days </h3>
+					<h3> Repeats every <select class='dropdown'><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option></select> <select class='dropdown'><option>hours</option><option>days</option></select></h3>
+				</div>
+				<div class="centered">
+				<div class="row top-buffer">
+					<div class="span6" style="float: none; margin; 0 auto;">
+					<input id="backup_now" type="button" class="btn btn-default btn-xlarge" name="Backup Now" value = "Backup Now"></input>
+					</div>
+				</div>
 				</div>
 			</div>
 			<div class = "col-sm-4">
@@ -238,7 +454,7 @@
 				</div>
 				<div class="row">
 				<div id="t1" class="tableholder">
-					<table class="table">
+					<table class="table" id="dates_table">
 						<tbody>
 							<?php
 								$fp = fopen("dates.txt", "r");
@@ -262,7 +478,7 @@
 				<div id="t1" class="tableholder">
 					<table class="table">
 						<tbody id="dirs_to_restore">
-							<tr>
+							<!--<tr>
 								<td>C:\documents\school\..</td>
 							</tr>
 							<tr>
@@ -297,14 +513,14 @@
 							</tr>
 							<tr>
 								<td>C:\projects\music\edm\..</td>
-							</tr>
+							</tr>-->
 						</tbody>
 					</table>
 				</div>
 				</div>
 				<div class="row">
 					<div class="checkbox">
-						<label><input type="checkbox" value="">Restore All</label>
+						<label><input id="restore_all" type="checkbox" value="">Restore All</label>
 					</div>
 				</div>
 				<div class="row">

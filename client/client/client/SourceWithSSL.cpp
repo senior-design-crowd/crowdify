@@ -223,8 +223,6 @@ int main() {
 
 
 	std::cout << "SSL finished" << std::endl;
-	int x;
-	std::cin >> x;
 	
 	SSL_shutdown(ssl);
 	SSL_free(ssl);
@@ -251,5 +249,7 @@ int main() {
 	ssh_bind sshbind;
 
 	ssh_bind_options_set(sshbind);*/
+
+	system("pause");
 
 }

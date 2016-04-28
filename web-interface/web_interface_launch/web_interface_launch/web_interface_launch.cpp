@@ -11,7 +11,7 @@ int main(void) {
 	bool system_ready;
 	errno = 0;
 
-	if (FILE *file = fopen("status.txt", "r")) {
+	if (FILE *file = fopen("client/status.txt", "r")) {
 		char line[20];
 		fgets(line, 20, file);
 		if (strcmp(line, "ready\n") == 0) system_ready = true;

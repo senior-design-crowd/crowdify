@@ -1,7 +1,7 @@
 #define OPENSSL_EXTRA 1
 
 #pragma once
-#define RECEIVE_PORT "1235"
+#define RECEIVE_PORT "1002"
 //#define CHAIN_CERT "../../certs/ca-chain.cert.pem"
 //#define CHAIN_CERT "../../certs/www.example.com.cert.pem"
 //#define CHAIN_CERT "../../certs/ca-cert.pem"
@@ -14,9 +14,9 @@
 #define KEYS_FOLDER "certs/"
 //#define SSH_KEYS "C:\\Users\\Eric\\.ssh\\authorized_keys"
 
-const int UDP_BROADCAST_PORT = 1234;
+const int UDP_BROADCAST_PORT = 1001;
 const int PACKET_SIZE = 8096;
-const int HANDSHAKE_PORT = 1236;
+const int HANDSHAKE_PORT = 1003;
 
 //static INLINE int PasswordCallBack(char* passwd, int sz, int rw, void* userdata)
 //{

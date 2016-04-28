@@ -4,6 +4,10 @@
 	margin: 10px;
 }
 
+#dirs_tableholder{
+	height: 600px;
+}
+
 .folderbuttonrow{
 	margin: 10px;
 }
@@ -29,11 +33,11 @@ input.time{
 	position: relative;
 }
 
-.highlight{background: yellow;}
+.highlight{background: lightgray;}
 
 tr { cursor: default; }
 
-.top-buffer{margin-top:50px;}
+.top-buffer{margin-top:50px;margin-bottom:30px;}
  
 .centered{margin: 0 auto; width: 60%}
 

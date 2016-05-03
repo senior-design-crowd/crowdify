@@ -1,9 +1,6 @@
 #include <SDL.h>
 #include <mpi.h>
 
-//#define WIN32_LEAN_AND_MEAN
-//#include <Windows.h>
-
 #include <stdio.h>
 #include <string>
 #include <vector>
@@ -17,6 +14,7 @@
 #include "header.h"
 #include "SDLEngine.h"
 #include "nodeMessages.h"
+#include "PlatformDependent.h"
 
 using namespace std;
 
@@ -30,11 +28,11 @@ int main(int argc, char* argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiNumNodes);
 
-	/*if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-		while (!IsDebuggerPresent()) {
+	if (argc > 1 && strcmp(argv[1], "-d") == 0) {
+		while (!BeingDebugged()) {
 			this_thread::sleep_for(chrono::milliseconds(200));
 		}
-	}*/
+	}
 
 	InitMPITypes();
 
@@ -182,7 +180,8 @@ int main(int argc, char* argv[])
 
 					if (numAliveNodes == numNetworkNodes) {
 						fp << "Switching to node changing stage 1, where alive states are continually flipped." << endl;
-						nodeChangingStage = 1;
+						//nodeChangingStage = 1;
+						nodeChangingStage = 2;
 					}
 
 					if (numAliveNodes < 2) {
@@ -435,7 +434,7 @@ int main(int argc, char* argv[])
 				++dhtFrame;
 
 				stringstream ss;
-				ss << "Images\\dht_frame" << dhtFrame << ".bmp";
+				ss << "Images\\dht_frame" << dhtFrame << " - TS - " << chrono::duration_cast<chrono::microseconds>(chrono::system_clock::now().time_since_epoch()).count() << ".bmp";
 
 				engine.TakeScreenshot(1, ss.str().c_str());
 				dhtChanged = false;

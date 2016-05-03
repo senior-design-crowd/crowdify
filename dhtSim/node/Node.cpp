@@ -16,8 +16,6 @@ using namespace std;
 
 #include "Node.h"
 
-float PointDistToRect(float x, float y, float left, float right, float top, float bottom);
-
 Node::Node(int mpiRank, int rootRank, ofstream* fp)
 	: 
 	// when a new node joins the network and asks us to split our DHT area in half,
@@ -32,14 +30,18 @@ Node::Node(int mpiRank, int rootRank, ofstream* fp)
 	m_bAlive(false),
 	// the rectangle coordinates representing our DHT area in the network
 	m_dhtArea(),
+	// each node needs a unique port number to listen on
+	m_blockTransferer(fp, 50000 + mpiRank),
 	// the random number generator and distribution to generate random
 	// coordinates within the DHT network
 	m_randGenerator((unsigned int)chrono::system_clock::now().time_since_epoch().count()),
 	m_randomAreaCoordGenerator(0.0f, 1.0f),
-	m_mpiRank(mpiRank), m_rootRank(rootRank), m_fp(*fp),
+	m_mpiRank(mpiRank),
+	m_rootRank(rootRank),
+	m_fp(*fp),
 	// how long to wait after sending an update to our neighbors
 	// until we send the next update
-	m_timeUntilUpdateNeighbors(std::chrono::seconds(2)),
+	m_timeUntilUpdate(std::chrono::seconds(2)),
 	// the timeout when a node will consider its neighbor dead if it hasn't
 	// received an update by then
 	m_timeUntilNeighborConsideredOffline(std::chrono::seconds(5)),
@@ -54,6 +56,18 @@ Node::Node(int mpiRank, int rootRank, ofstream* fp)
 	m_edgeAbutEpsilon(1e-4f),
 	m_bSeenDeath(false)
 {
+	stringstream ss;
+	ss << "tcp://127.0.0.1:" << m_mpiRank + 60000;
+	m_ownBlockStoreAddr = ss.str();
+
+	int mpiSize;
+	MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+
+	for (int i = 0; i < mpiSize - 1; ++i) {
+		ss.str("");
+		ss << "tcp://127.0.0.1:" << i + 50000;
+		m_vNeighborNodeAddrs.push_back(ss.str());
+	}
 }
 
 const DHTArea& Node::GetDHTArea() const
@@ -243,13 +257,17 @@ int Node::GetNearestNeighbor(float x, float y) const
 		return -1;
 	}
 
+	m_fp << LogOutputHeader() << "\t\tPoint is not inside our DHT area." << endl;
+
 	vector<NodeNeighbor>::const_iterator	closestNeighbor = m_vNeighbors.end();
-	float									closestNeighborDist = numeric_limits<float>::max();
+	float									closestNeighborDist = FLT_MAX;
 
 	for (vector<NodeNeighbor>::const_iterator i = m_vNeighbors.begin(); i != m_vNeighbors.end(); ++i) {
+		m_fp << LogOutputHeader() << "\t\tPoint dist from node " << i->nodeNum << ": ";
+		
 		float neighborDist = i->neighborArea.DistanceFromPt(x, y);
 
-		m_fp << LogOutputHeader() << "\t\tPoint dist from node " << i->nodeNum << ": " << neighborDist << endl
+		m_fp << neighborDist << endl
 			<< i->neighborArea
 			<< endl;
 
@@ -267,8 +285,15 @@ int Node::GetNearestNeighbor(float x, float y) const
 	// can't return -1 because that would indicate
 	// its inside our own DHT area. so returning -2.
 	if (closestNeighbor == m_vNeighbors.end()) {
+		m_fp << LogOutputHeader() << "\t\tERROR: Couldn't find a neighbor that contains the point." << endl;
+		m_fp.flush();
 		return -2;
 	}
+
+	m_fp << LogOutputHeader() << "\t\tNode #";
+	m_fp.flush();
+	m_fp << closestNeighbor->nodeNum << " is new closest node." << endl;
+	m_fp.flush();
 
 	return closestNeighbor->nodeNum;
 }
@@ -348,14 +373,47 @@ void Node::SendNeighborsDHTUpdate()
 	OutputDebugMsg("Reached end of SendNeighborsDHTUpdate");
 }
 
-void Node::UpdateNeighbors()
+void Node::Update()
 {
-	OutputDebugMsg("In UpdateNeighbors");
+	OutputDebugMsg("In Update");
+
+	m_blockTransferer.Update();
+
+	if (m_blockTransferer.GetNumMsgsAvail() > 0) {
+		BlockMsg	msg = m_blockTransferer.GetMsg();
+
+		m_fp << LogOutputHeader() << "Received block transfer msg." << endl;
+
+		double		hashCoords[2];
+
+		m_hashEval.GetHashPoint((unsigned char*)msg.hash, msg.initial.hashLen, &hashCoords[0], &hashCoords[1]);
+
+		m_fp << LogOutputHeader() << "\tBlock at coordinates: (" << hashCoords[0] << ", " << hashCoords[1] << ")" << endl;
+
+		// if the file is contained within our own DHT area then store it in
+		// our own block store
+		if (m_dhtArea.DistanceFromPt(hashCoords[0], hashCoords[1]) == 0.0f) {
+			m_fp << LogOutputHeader() << "\tBlock is within our own DHT area." << endl
+				<< "\tSending to dummy block store: " << m_ownBlockStoreAddr << endl;
+			m_blockTransferer.SendBlockTransferMsg(m_ownBlockStoreAddr.c_str(), msg);
+		} else {
+			m_fp << LogOutputHeader() << "\tGetting closest neighbor to block." << endl;
+			int nearestNeighbor = GetNearestNeighbor(hashCoords[0], hashCoords[1]);
+			m_fp << LogOutputHeader() << "\tNearest neighbor: " << nearestNeighbor << endl;
+			m_fp.flush();
+
+			if(nearestNeighbor > 0 && nearestNeighbor < m_vNeighborNodeAddrs.size()) {
+				m_fp << LogOutputHeader() << "\tValid nearest neighbor, forwarding msg to: " << m_vNeighborNodeAddrs[nearestNeighbor] << endl;
+				m_blockTransferer.SendBlockTransferMsg(m_vNeighborNodeAddrs[nearestNeighbor].c_str(), msg);
+			}
+		}
+	}
+
 	chrono::high_resolution_clock::time_point timeNow = chrono::high_resolution_clock::now();
 
 	// check if its time to update our neighbors again
 	chrono::milliseconds timeSinceLastUpdate = chrono::duration_cast<chrono::milliseconds>(timeNow - m_timeOfLastNeighborUpdate);
-	if (timeSinceLastUpdate >= m_timeUntilUpdateNeighbors) {
+	if (timeSinceLastUpdate >= m_timeUntilUpdate) {
 		SendNeighborsDHTUpdate();
 	}
 
@@ -363,7 +421,7 @@ void Node::UpdateNeighbors()
 	int neighborNum = 0;
 
 	for (size_t neighborNum = 0; neighborNum < m_vNeighbors.size(); ++neighborNum) {
-		vector<chrono::high_resolution_clock::time_point>::iterator timerIt = m_neighborTimeSinceLastUpdate.begin() + neighborNum;
+		vector<chrono::high_resolution_clock::time_point>::const_iterator timerIt = m_neighborTimeSinceLastUpdate.begin() + neighborNum;
 		OutputDebugMsg("timerIt constructed");
 		timeNow = chrono::high_resolution_clock::now();
 
@@ -375,8 +433,8 @@ void Node::UpdateNeighbors()
 		if (timeSinceUpdate >= m_timeUntilNeighborConsideredOffline) {
 			m_bSeenDeath = true;
 
-			vector<NodeNeighbor>::iterator nodeIt = m_vNeighbors.begin() + neighborNum;
-			vector<vector<NodeNeighbor>>::iterator nodeNeighborsIt = m_vNeighborsOfNeighbors.begin() + neighborNum;
+			vector<NodeNeighbor>::const_iterator nodeIt = m_vNeighbors.begin() + neighborNum;
+			vector<vector<NodeNeighbor>>::const_iterator nodeNeighborsIt = m_vNeighborsOfNeighbors.begin() + neighborNum;
 
 			DeadNeighbor deadNeighbor;
 			deadNeighbor.neighbor = *nodeIt;
@@ -451,7 +509,7 @@ void Node::UpdateNeighbors()
 		}
 	}
 
-	OutputDebugMsg("Reached end of UpdateNeighbors");
+	OutputDebugMsg("Reached end of Update");
 }
 
 void Node::ResolveNodeTakeoverNotification(int srcNode, InterNodeMessage::NodeTakeoverInfo& nodeTakeoverNotification)

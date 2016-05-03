@@ -45,10 +45,15 @@
 	var user = "<?php echo $_GET['user']?>";
 	var addr = "<?php echo $_SERVER['REMOTE_ADDR']?>";
 	var dirs_to_backup_data_string = "<?php 
-		exec("getBackupDirs $_GET['user'] $_SERVER['REMOTE_ADDR]");
+		$user = $_GET['user'];
+		$addr = $_SERVER['REMOTE_ADDR'];
+		exec('getBackupDirs $user $addr');
 		$fp = fopen("files.txt", "r");
 		$data = "";
-		$data = fgets($fp);
+		while(($line = fgets($fp)) !== false){
+			$line = addslashes($line);
+			$data .= $line;
+		}
 		echo $data;
 	?>";
 	
@@ -167,6 +172,7 @@
 			$(new_tbody).attr("id", "dirs_to_restore");
 			var old_tbody = document.getElementById('dirs_to_restore');
 			old_tbody.parentNode.replaceChild(new_tbody, old_tbody);
+			makeClassHighlightable('.dirs_to_restore_class');
 		}
 		function add_in_table(t, value, Class){
 			var tbody = document.getElementById(t);
@@ -190,7 +196,10 @@
 			add_in_table('excludes', new_ex, '.excludes_class');
 			document.getElementById('add_ex').value = "";
 		}
-		function save(){
+		function save(display_msg){
+			if(display_msg == undefined){
+				display_msg = true;
+			}
 			var added_string;
 			if(added.length == 0) added_string = "";
 			else
@@ -268,20 +277,20 @@
 			
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function(){
-				if(xhttp.readyState == 4 && xhttp.status == 200){
-					alert("save successful");
+				if(xhttp.readyState == 4 && xhttp.status == 200 && display_msg){
+					alert("sa 	ve successful");
 				}
 			};
 			xhttp.open("POST", "save.php", true);
 			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-			xhttp.send("add=" + added_string + "&remove=" + removed_string + "&add_ex=" + added_excludes_string + "&remove_ex=" + removed_excludes_string + "&dateAndTime" + date_and_time + "&user=" + user + "&addr=" + addr);
+			xhttp.send("add=" + added_string + "&remove=" + removed_string + "&add_ex=" + added_excludes_string + "&remove_ex=" + removed_excludes_string + "&dateAndTime" +date_and_time + "&user=" + user + "&addr=" + addr);
 			
 			added = [];
 			removed = [];
 			
 		}
 		function backup_now(){
-			save();
+			save(false);
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function(){
 				if(xhttp.readyState == 4 && xhttp.status == 200){
@@ -387,105 +396,53 @@
 		}
 		
 		$(function () {
-			var files = [
-                {
-                    "name": "Documents", "dateModified": "9/12/2013", "type": "File Folder", "size": 4480, "files": [
-                        { "name": "To do list.txt", "dateModified": "11/5/2013", "type": "TXT File", "size": 4448 },
-                        { "name": "Work.txt", "dateModified": "9/12/2013", "type": "TXT File", "size": 32 }
-                    ]
-                },
-                {
-                    "name": "Music", "dateModified": "6/10/2014", "type": "File Folder", "size": 5594, "files": [
-                        {
-                            "name": "AC/DC", "dateModified": "6/10/2014", "type": "File Folder", "size":2726, "files": [
-                                { "name": "Stand Up.mp3", "dateModified": "6/10/2014", "type": "MP3 File", "size": 456 },
-                                { "name": "T.N.T.mp3", "dateModified": "6/10/2014", "type": "MP3 File", "size": 1155 },
-                                { "name": "The Jack.mp3", "dateModified": "6/10/2014", "type": "MP3 File", "size": 1115 }
-                            ]
-                        },
-                        {
-                            "name": "WhiteSnake", "dateModified": "6/11/2014", "type": "File Folder", "size": 2868, "files": [
-                                { "name": "Trouble.mp3", "dateModified": "6/11/2014", "type": "MP3 File", "size": 1234 },
-                                { "name": "Bad Boys.mp3", "dateModified": "6/11/2014", "type": "MP3 File", "size": 522 },
-                                { "name": "Is This Love.mp3", "dateModified": "6/11/2014", "type": "MP3 File", "size": 1112 },
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Pictures", "dateModified": "1/9/2014", "type": "File Folder", "size": 1825, "files": [
-                        {
-                            "name": "Jack's Birthday", "dateModified": "6/9/2014", "type": "File Folder", "size": 631, "files": [
-                                { "name": "Picture11.png", "dateModified": "6/9/2014", "type": "PNG image", "size": 493 },
-                                { "name": "Picture12.png", "dateModified": "6/9/2014", "type": "PNG image", "size": 88 },
-                                { "name": "Picture13.gif", "dateModified": "6/9/2014", "type": "GIF File", "size": 50 },
-                            ]
-                        },
-                        {
-                            "name": "Trip to London", "dateModified": "3/10/2014", "type": "File Folder", "size": 1194, "files": [
-                                { "name": "Picture1.png", "dateModified": "3/10/2014", "type": "PNG image", "size": 974 },
-                                { "name": "Picture2.png", "dateModified": "3/10/2014", "type": "PNG image", "size": 142 },
-                                { "name": "Picture3.png", "dateModified": "3/10/2014", "type": "PNG image", "size": 41 },
-                                { "name": "Picture4.png", "dateModified": "3/10/2014", "type": "PNG image", "size": 25 },
-                                { "name": "Picture5.png", "dateModified": "3/10/2014", "type": "PNG image", "size": 12 },
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "name": "Videos", "dateModified": "1/4/2014", "type": "File Folder", "size":0
-                        
-                },
-                {
-                    "name": "Books", "dateModified": "1/4/2014", "type": "File Folder", "size": 99376, "files": [
-                        {
-                            "name": "James Rollins", "dateModified": "6/2/2014", "type": "File Folder", "size": 34228, "files": [
-                                { "name": "Alter of Eden.pdf", "dateModified": "6/5/2014", "type": "Adobe Acrobat Document", "size": 8894 },
-                                { "name": "Amazonia.pdf", "dateModified": "3/2/2014", "type": "Adobe Acrobat Document", "size": 6212 },
-                                { "name": "Subterranean.pdf", "dateModified": "1/4/2014", "type": "Adobe Acrobat Document", "size": 4820 },
-                                { "name": "Sandstorm.pdf", "dateModified": "2/2/2014", "type": "Adobe Acrobat Document", "size": 14302 }
-                            ]
-                        },
-                        {
-                            "name": "Stephen King", "dateModified": "3/10/2014", "type": "File Folder", "size":65148, "files": [
-                                { "name": "It.pdf", "dateModified": "3/10/2014", "type": "Adobe Acrobat Document", "size": 9987 },
-                                { "name": "Misery.pdf", "dateModified": "3/10/2014", "type": "Adobe Acrobat Document", "size": 32313 },
-                                { "name": "Pet Sematary.pdf", "dateModified": "3/10/2014", "type": "Adobe Acrobat Document", "size": 22848 }
-                            ]
-                        }
-                    ]
-                },
-                { "name": "Games", "dateModified": "8/8/2014", "type": "File Folder", "size": 0 },
-                {
-                    "name": "Projects", "dateModified": "7/4/2014", "type": "File Folder", "size": 4, "files": [
-                        {
-                            "name": "Visual Studio 2012", "dateModified": "7/4/2014", "type": "File Folder", "size": 1, "files": [
-                                { "name": "Project10.sln", "dateModified": "7/4/2014", "type": "Microsoft Visual Studio Solution", "size": 1 }
-                            ]
-                        },
-                        {
-                            "name": "Visual Studio 2013", "dateModified": "9/6/2014", "type": "File Folder", "size": 3, "files": [
-                                { "name": "Project1.sln", "dateModified": "9/6/2014", "type": "Microsoft Visual Studio Solution", "size": 1 },
-                                { "name": "Project2.sln", "dateModified": "9/6/2014", "type": "Microsoft Visual Studio Solution", "size": 1 },
-                                { "name": "Project3.sln", "dateModified": "9/6/2014", "type": "Microsoft Visual Studio Solution", "size": 1 }
-                            ]
-                        }
-                    ]
-                }
-            ];
+			var all_dirs = dirs_to_backup_data_string;  //TEMPORARY, CHANGE THIS
+			var dirs_to_backup = all_dirs.split(",");
+			var files = new Array();
+			for(var i = 0; i < dirs_to_backup.length; i++){
+				var pointer = dirs_to_backup[i].split("\\");
+				var current_level = files;
+				var current_pointer_dir = 0;
+				for(var j = 0; j < current_level.length; j++){
+					//check if any added directories are already in the array
+					if(current_pointer_dir >= pointer.length){
+						i++;
+						break;
+					}
+					else if(pointer[current_pointer_dir] == current_level[j].name){
+						//go down a level and begin comparing the next directories
+						current_level = current_level[j].files;
+						j = 0;
+						current_pointer_dir++;
+					}
+				}
+				//if you have now have a new unique pointer path
+				if(j == current_level.length){
+					while(current_pointer_dir < pointer.length){
+						if(pointer[current_pointer_dir] != ".."){
+						var new_dir = {name:pointer[current_pointer_dir], files: new Array()};
+						current_level.push(new_dir);
+						current_level = new_dir.files;
+						current_pointer_dir++;
+						}
+						else{
+							break;
+						}
+					}
+				}
+			}
 			
             $("#dirs_to_backup").igTreeGrid({
-                width: "800px",
-                height:"550px",
+                width: "100%",
+                height:"700px",
                 dataSource: files,
                 autoGenerateColumns: false,
                 primaryKey: "name",
                 columns: [
-                    { headerText: "Name", key: "name", width: "250px", dataType: "string" },
-                    { headerText: "Date Modified", key: "dateModified", width: "130px", dataType: "date"}
+                    { headerText: "Name", key: "name", width: "250px", dataType: "string" }
                 ],
                 childDataKey: "files",
-                initialExpandDepth: 2,
+                initialExpandDepth: 0,
                 features: [
                 {
                     name: "Selection",
@@ -513,10 +470,6 @@
                             condition: "greaterThan"
                          }
                         ]
-                },
-                {
-                    name: "Paging",
-                    pageSize: 4
                 }]
             });
         });
@@ -534,12 +487,18 @@
 				</h2>
 				<div id="dirs_tableholder" class="tableholder">
 					<table class="table" id="dirs_to_backup">
+					<tbody>
+							<?php
+								/*$fp = fopen("files.txt", "r");
+								$data = "";
+								$data = fgets($fp);
+								$dirs = explode(',', $data);
+								foreach($dirs as $itemName){
+									echo "<tr class='dirs_to_backup_class'><td>$itemName</td></tr>";
+								}*/
+								?>
+						</tbody>
 					</table>
-				</div>
-				<input id = "add_dir" class ="text" type="text"/>
-				<div class="row folderbuttonrow">
-					<input id="Add" type="button" class="btn btn-default" name="Add" value = "Add"></input>
-					<input id="Remove" type="button" class="btn btn-default pull-right" name="Remove" value="Remove"></input>
 				</div>
 			</div>
 			<div class = "col-sm-4">
@@ -580,7 +539,9 @@
 					<table class="table" id="excludes">
 						<tbody>
 							<?php
-							exec("getExcludes $_GET['user'] $_SERVER['REMOTE_ADDR']");
+							$user = $_GET['user'];
+							$addr = $_SERVER['REMOTE_ADDR'];
+							exec('getExcludes $user $addr');
 							$fp = fopen("excludes.txt", "r");
 							$data = "";
 							$data = fgets($fp);

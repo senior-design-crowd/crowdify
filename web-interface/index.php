@@ -142,7 +142,7 @@
 			xhttp.open("POST", "dirs_for_date.php", true);
 			xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
 			var date = row.find('td:eq(0)').html();
-			xhttp.send("date=" + date);
+			xhttp.send("date=" + date + "&user=" + user + "&addr=" + addr);
 			});
 
 		});
@@ -160,6 +160,7 @@
 			$(new_tbody).attr("id", "dirs_to_restore");
 			var old_tbody = document.getElementById('dirs_to_restore');
 			old_tbody.parentNode.replaceChild(new_tbody, old_tbody);
+			makeClassHighlightable('.dirs_to_restore_class');
 		}
 		function add_in_table(t, value, Class){
 			var tbody = document.getElementById(t);
@@ -183,7 +184,10 @@
 			add_in_table('excludes', new_ex, '.excludes_class');
 			document.getElementById('add_ex').value = "";
 		}
-		function save(){
+		function save(display_msg){
+			if(display_msg == undefined){
+				display_msg = true;
+			}
 			var added_string;
 			if(added.length == 0) added_string = "";
 			else
@@ -261,7 +265,7 @@
 			
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function(){
-				if(xhttp.readyState == 4 && xhttp.status == 200){
+				if(xhttp.readyState == 4 && xhttp.status == 200 && display_msg){
 					alert("save successful");
 				}
 			};
@@ -274,7 +278,7 @@
 			
 		}
 		function backup_now(){
-			save();
+			save(false);
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function(){
 				if(xhttp.readyState == 4 && xhttp.status == 200){
@@ -319,7 +323,7 @@
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function(){
 				if(xhttp.readyState == 4 && xhttp.status == 200){
-					alert("save successful");
+					alert("restore started");
 				}
 			};
 			xhttp.open("POST", "restore.php", true);

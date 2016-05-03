@@ -1,7 +1,9 @@
 <?php
 $date = $_POST["date"];
+$user = $_POST["user"];
+$addr = $_POST["addr"];
 
-exec("getDirsForDate $date $_POST['user'] $_POST['addr']");
+exec('getDirsForDate $date $user $addr');
 
 $fp = fopen($date . ".txt", "r");
 

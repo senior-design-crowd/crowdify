@@ -44,11 +44,11 @@
 	var removed_ex = new Array();
 	var user = "<?php echo $_GET['user']?>";
 	var addr = "<?php echo $_SERVER['REMOTE_ADDR']?>";
-	var dirs_to_backup_data_string = "<?php 
+	var all_dirs_string = "<?php 
 		$user = $_GET['user'];
 		$addr = $_SERVER['REMOTE_ADDR'];
-		exec('getBackupDirs $user $addr');
-		$fp = fopen("files.txt", "r");
+		exec('getDirs $user $addr');
+		$fp = fopen("all_dirs.txt", "r");
 		$data = "";
 		while(($line = fgets($fp)) !== false){
 			$line = addslashes($line);
@@ -56,6 +56,17 @@
 		}
 		echo $data;
 	?>";
+	//getDirs should make both all_dirs.txt and dirs.txt, so it is only called once
+	var dirs_to_backup_data_string = "<?php 
+		$fp = fopen("dirs.txt", "r");
+		$data = "";
+		while(($line = fgets($fp)) !== false){
+			$line = addslashes($line);
+			$data .= $line;
+		}
+		echo $data;
+	?>";
+	var dirs_to_backup_ids = new Array();
 	
 	$(function() {
 		makeClassHighlightable('.dirs_to_backup_class');
@@ -394,13 +405,41 @@
 		function hasClass( elem, klass ) {
 			return (" " + elem.className + " " ).indexOf( " "+klass+" " ) > -1;
 		}
+	
+		var contains = function(needle) {
+			// Per spec, the way to identify NaN is that it is not equal to itself
+			var findNaN = needle !== needle;
+			var indexOf;
+
+			if(!findNaN && typeof Array.prototype.indexOf === 'function') {
+				indexOf = Array.prototype.indexOf;
+			} else {
+				indexOf = function(needle) {
+					var i = -1, index = -1;
+
+					for(i = 0; i < this.length; i++) {
+						var item = this[i];
+
+						if((findNaN && item !== item) || item === needle) {
+							index = i;
+							break;
+						}
+					}
+
+					return index;
+				};
+			}
+
+			return indexOf.call(this, needle) > -1;
+		};
 		
 		$(function () {
-			var all_dirs = dirs_to_backup_data_string;  //TEMPORARY, CHANGE THIS
-			var dirs_to_backup = all_dirs.split(",");
+			var all_dirs = all_dirs_string.split(",");
+			var dirs_to_backup = dirs_to_backup_data_string.split(",");
 			var files = new Array();
-			for(var i = 0; i < dirs_to_backup.length; i++){
-				var pointer = dirs_to_backup[i].split("\\");
+			for(var i = 0; i < all_dirs.length; i++){
+				var pointer_string = all_dirs[i];
+				var pointer = all_dirs[i].split("\\");
 				var current_level = files;
 				var current_pointer_dir = 0;
 				for(var j = 0; j < current_level.length; j++){
@@ -412,7 +451,7 @@
 					else if(pointer[current_pointer_dir] == current_level[j].name){
 						//go down a level and begin comparing the next directories
 						current_level = current_level[j].files;
-						j = 0;
+						j = -1;//-1 because we actuallly want it to be 0 but it will be incremented by the for
 						current_pointer_dir++;
 					}
 				}
@@ -420,10 +459,13 @@
 				if(j == current_level.length){
 					while(current_pointer_dir < pointer.length){
 						if(pointer[current_pointer_dir] != ".."){
-						var new_dir = {name:pointer[current_pointer_dir], files: new Array()};
+						var is_backup = false;
+						if (($.inArray(pointer_string, dirs_to_backup) > -1) && ((current_pointer_dir == pointer.length - 1) || (pointer[current_pointer_dir + 1] == ".."))) is_backup = true;
+						var new_dir = {name:pointer[current_pointer_dir], files: new Array(), backup: is_backup};
 						current_level.push(new_dir);
 						current_level = new_dir.files;
-						current_pointer_dir++;
+						if(is_backup) dirs_to_backup_ids.push(pointer[current_pointer_dir]);
+							current_pointer_dir++;
 						}
 						else{
 							break;
@@ -431,29 +473,51 @@
 					}
 				}
 			}
+				
+				
+			//$(row_selectors).addClass("rs");
 			
-            $("#dirs_to_backup").igTreeGrid({
+           $("#dirs_to_backup").igTreeGrid({
+				//rowTemplate: "<tr><td>${name}</td><td><input type='checkbox' {{if backup}} checked='checked' {{/if}}></td><tr>",
                 width: "100%",
                 height:"700px",
                 dataSource: files,
+				rendered: function(evt, ui){
+					var rows = $("#dirs_to_backup").igTreeGrid('allRows');
+	
+						for (var i = 0; i < rows.length; i++) {
+							var $row = $(rows[i]);
+							var rowId = $row.data('id');
+							var is_backup = false;//$row.data('is_backup');
+							if(contains.call(dirs_to_backup_ids, rowId)) is_backup = true;
+							//$("#dirs_to_backup").igTreeGrid("toggleRow", $row);
+							//$('.rs').igTreeGridRowSelectors("toggleCheckStateById", rowId);
+							$("#dirs_to_backup").igTreeGridRowSelectors("changeCheckStateById", rowId, is_backup);
+						}
+				},
                 autoGenerateColumns: false,
                 primaryKey: "name",
                 columns: [
-                    { headerText: "Name", key: "name", width: "250px", dataType: "string" }
+					//{ headerText: "backup", key: "backup"},
+                    { headerText: "name", key: "name", width: "250px", dataType: "string" }
                 ],
+				//jQueryTemplating: true,
                 childDataKey: "files",
-                initialExpandDepth: 0,
+                initialExpandDepth: 5,//change this in the future to represent the max expand depth of backed up files
                 features: [
                 {
                     name: "Selection",
-                    multipleSelection: true
+					mode:"row",
+					activation: false,
+					multipleSelection: true
                 },
                 {
                     name: "RowSelectors",
                     enableCheckBoxes: true,
                     checkBoxMode: "biState",
                     enableSelectAllForPaging: true,
-                    enableRowNumbering: false
+                    enableRowNumbering: false,
+					
                 },
                 {
                     name: "Sorting"
@@ -472,7 +536,13 @@
                         ]
                 }]
             });
+			/*$('.rs').igTreeGridRowSelectors("toggleCheckStateById",0);
+			$('.rs').igTreeGridRowSelectors("toggleCheckStateById",1);
+			$('.rs').igTreeGridRowSelectors("toggleCheckStateById",2);
+			$('.rs').igTreeGridRowSelectors("toggleCheckStateById",3);
+			$('#dirs_to_backup').igTreeGridRowSelectors("toggleCheckStateById",0);*/
         });
+		//$(".dirs_to_backup").igTreeGridRowSelectors("toggleCheckStateById",1);
 	</script>
 </head>
 <body onload="registerHandlers()">

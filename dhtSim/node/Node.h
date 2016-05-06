@@ -7,6 +7,8 @@
 #include <string>
 
 #include "nodeMessages.h"
+#include "HashEval.h"
+#include "BlockTransferer.h"
 
 typedef struct {
 	NodeNeighbor									neighbor;
@@ -30,7 +32,7 @@ public:
 	bool	InitializeDHTArea(int aliveNode);
 	bool	SplitDHTArea(int newNode, DHTArea& newDHTArea, std::vector<NodeNeighbor>& r_vNewNodeNeighbors, std::vector<std::vector<NodeNeighbor>>& r_vNewNodeNeighborsOfNeighbors);
 	bool	UpdateNeighborDHTArea(int nodeNum, const DHTArea& dhtArea, const std::vector<NodeNeighbor>& neighborsOfNeighbor);
-	void	UpdateNeighbors();
+	void	Update();
 
 	const DHTArea&						GetDHTArea() const;
 	const std::vector<NodeNeighbor>&	GetNeighbors() const;
@@ -62,16 +64,21 @@ private:
 	std::mt19937													m_randGenerator;
 	std::uniform_real_distribution<float>							m_randomAreaCoordGenerator;
 	int																m_nextSplitAxis;
+
 	int																m_mpiRank;
 	int																m_rootRank;
 	std::ofstream&													m_fp;
 
-	const std::chrono::duration<int, std::milli>					m_timeUntilUpdateNeighbors;
+	const std::chrono::duration<int, std::milli>					m_timeUntilUpdate;
 	const std::chrono::duration<int, std::milli>					m_timeUntilNeighborConsideredOffline;
 	const std::chrono::duration<float, std::milli>					m_takeoverTimerPerArea;
 	const float														m_edgeAbutEpsilon;
-
 	bool															m_bSeenDeath;
+
+	BlockTransferer													m_blockTransferer;
+	std::string														m_ownBlockStoreAddr;
+	std::vector<std::string>										m_vNeighborNodeAddrs;
+	HashEval														m_hashEval;
 };
 
 #endif

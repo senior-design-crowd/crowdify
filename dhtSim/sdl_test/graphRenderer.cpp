@@ -96,9 +96,9 @@ bool RenderGraph(const string& graphDotStr, SDLEngine* engine, int windowIndex, 
 	}
 
 	// render the graph as a PNG image
-	GVC_t*	gvc = gvContext();
-	char*	graphRenderingBuf;
-	size_t	graphRenderingBufSize;
+	GVC_t*			gvc = gvContext();
+	char*			graphRenderingBuf;
+	unsigned int	graphRenderingBufSize;
 
 	gvLayout(gvc, g, "dot");
 	gvRenderData(gvc, g, "png", &graphRenderingBuf, &graphRenderingBufSize);
@@ -117,12 +117,12 @@ bool RenderGraph(const string& graphDotStr, SDLEngine* engine, int windowIndex, 
 	static int frameNum = 0;
 	++frameNum;
 
-	stringstream ss;
+	/*stringstream ss;
 	ss << "Images\\networkGraph_frame" << frameNum << ".png";
 	
 	ofstream fp(ss.str());
 	fp.write(graphRenderingBuf, graphRenderingBufSize);
-	fp.close();
+	fp.close();*/
 
 	// load the PNG image into a surface
 	*r_pngTexture = engine->LoadSDLImage(graphRenderingBuf, graphRenderingBufSize, windowIndex, width, height);

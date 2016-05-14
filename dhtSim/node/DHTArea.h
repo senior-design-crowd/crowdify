@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <ostream>
+#include <fstream>
 
 typedef struct _DHTRegion {
 	float left, right, top, bottom;
@@ -31,7 +32,7 @@ public:
 	bool	operator==(const DHTArea& a) const;
 	bool	operator!=(const DHTArea& a) const;
 
-	bool	SendOverMPI(int rank, int tag) const;
+	bool	SendOverMPI(int rank, int tag, std::ofstream& fp) const;
 	bool	RecvOverMPI(int rank, int tag);
 
 	friend std::ostream& operator<<(std::ostream& o, const DHTArea& a);

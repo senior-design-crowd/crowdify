@@ -10,7 +10,6 @@
 #include <vector>
 
 #include "PlatformDependent.h"
-#include "ExceptionInfo.h"
 #include "nodeMessages.h"
 #include "Node.h"
 
@@ -31,7 +30,7 @@ void CreateDummyStorageDaemon(int mpiRank, ofstream& fp, bool debug = false)
 #ifdef _WIN32
 	const char* procPath = "\"..\\Debug\\DummyStorageDaemon.exe\"";
 #else
-	const char* procPath = "\"..\\Debug\\DummyStorageDaemon\"";
+	const char* procPath = "\".DummyStorageDaemon\"";
 #endif
 
 	stringstream ss;
@@ -68,8 +67,6 @@ int main(int argc, char* argv[])
 		debug = true;
 	}
 
-	SetExceptionHooks(rootRank);
-
 	InitMPITypes();
 
 	MPI_Status	mpiStatus;
@@ -79,6 +76,8 @@ int main(int argc, char* argv[])
 	sprintf(filename, "node%d.txt", mpiRank);
 	
 	ofstream fp(filename);
+	
+	SetExceptionHooks(rootRank, &fp);
 
 	Node node(mpiRank, rootRank, &fp);
 
@@ -133,10 +132,10 @@ int main(int argc, char* argv[])
 
 					fp << node.LogOutputHeader() << "New DHT area:" << endl
 						<< dhtArea
-						<< endl << "\tUpdated root with new DHT area." << endl;
+						<< endl << "\tUpdated root (" << rootRank << ")  with new DHT area." << endl;
 					fp.flush();
 
-					dhtArea.SendOverMPI(rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE);
+					dhtArea.SendOverMPI(rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE, fp);
 
 					fp << node.LogOutputHeader() << "Launching storage daemon" << endl;
 					CreateDummyStorageDaemon(mpiRank, fp, debug);
@@ -311,9 +310,9 @@ int main(int argc, char* argv[])
 					InterNodeMessageTags::RESPONSE_DHT_AREA,
 					MPI_COMM_WORLD);
 
-				newDHTArea.SendOverMPI(mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA);
+				newDHTArea.SendOverMPI(mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA, fp);
 
-				Node::SendNeighborsOverMPI(vNewNodeNeighbors, mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA);
+				Node::SendNeighborsOverMPI(vNewNodeNeighbors, mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA, fp);
 
 				// for each of the new node's neighbors, send:
 				//	o the number of neighbors that neighbor itself has
@@ -324,7 +323,7 @@ int main(int argc, char* argv[])
 					MPI_Send((void*)&numNeighborsOfNeighbor, 1, MPI_INT, mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA, MPI_COMM_WORLD);
 
 					if(numNeighborsOfNeighbor > 0) {
-						Node::SendNeighborsOverMPI(*it, mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA);
+						Node::SendNeighborsOverMPI(*it, mpiStatus.MPI_SOURCE, InterNodeMessageTags::RESPONSE_DHT_AREA, fp);
 					}
 				}
 
@@ -332,8 +331,8 @@ int main(int argc, char* argv[])
 
 				DHTArea dhtArea = node.GetDHTArea();
 
-				fp << endl << "\tUpdated root with new DHT area." << endl;
-				dhtArea.SendOverMPI(rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE);
+				fp << endl << "\tUpdated root (" << rootRank << ") with new DHT area." << endl;
+				dhtArea.SendOverMPI(rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE, fp);
 
 				newMsg = 0;
 				MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::REQUEST_DHT_AREA, MPI_COMM_WORLD, &newMsg, &mpiStatus);

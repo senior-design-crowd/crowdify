@@ -343,6 +343,7 @@
 					}
 					if(!was_just_added)removed.push(dir_to_remove);
 					table.deleteRow(i);
+					i--; //have to go one down because we just removed a row
 				}
 			}
 			//go through the list and put all highlighted items into the remove array

@@ -346,7 +346,7 @@
 			var xhttp = new XMLHttpRequest();
 			xhttp.onreadystatechange = function(){
 				if(xhttp.readyState == 4 && xhttp.status == 200){
-					alert("save successful");
+					alert("Initiating Restore...");
 				}
 			};
 			xhttp.open("POST", "restore.php", true);
@@ -435,7 +435,7 @@
 		
 		$(function () {
 			var all_dirs = all_dirs_string.split(",");
-			var dirs_to_backup = dirs_to_backup_data_string.split(",");
+			var dirs_to_backup = new Array();//dirs_to_backup_data_string.split(",");
 			var files = new Array();
 			for(var i = 0; i < all_dirs.length; i++){
 				var pointer_string = all_dirs[i];

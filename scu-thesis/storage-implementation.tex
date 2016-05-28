@@ -1,0 +1,18 @@
+\section*{Storage}
+Storage is the function of a backup system and we wanted to ensure that the storage mechanism we used would be reliable, secure, and maintainable. MySQL was a clear choice. It is well tested, contains an excellent permissions system, and is commercially supported. 
+\subsection*{Storage Layout}
+Internally the database uses five different tables to store all data: clients, jobs, files, blocks, and logs. The "clients" table relates the IP address of the client to a client ID. The "jobs" table relates a job ID  with a time and a client. The file table relates file permissions and dates to a file ID. The blocks table stores all the file data in a series of blocks which are indexed by their SHA1 hash.
+
+In order for the structure of the file system to be properly represented, we needed a way to relate files to each other to form a directed tree. This is provided by a file table that relates one file ID to another. While this table is sufficient to represent a graph of files, the file systems we back up are proper trees. Using this system has an added benefit: Files and directories can be represented using the same schema. Since both have identical collection of attributes, we use this system without any loss of information.
+
+Jobs need to be related to a series of files to be backed up on the client machine. To do this, a table relating file IDs to job IDs is provided. As many file IDs as desired can be related to a given job ID.
+
+The actual data contained in the files are stored in a table of blocks. Each block is of a fixed size and is indexed by its hash. The file metadata is related to a set of blocks through an intermediate table that relates file IDs to the hashes of the blocks that make up the file. The entries are inserted in the order that the blocks appear in the file.
+
+\subsection*{Storage Optimization}
+Separating files into blocks allowed us to optimise the storage used. Many files share common parts, and duplicate blocks are simply not inserted into the system. In our tests, we got up to 30% compression on par with the GZIP compression algorithm.
+\subsection*{Insertion}
+Once a client has been inserted, a job has been created, and the job has been related to the directories the user wants to back up, the inserter uses the SFTP protocol to connect to the client system at the IP stored in the clients table. It logs into the system using a predefined password. It then recursively compares the record for each directory, updating file entries that already exist and inserting file records that do not exist. No file record is ever deleted.
+
+
+ 

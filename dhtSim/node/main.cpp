@@ -2,14 +2,15 @@
 #include <stdio.h>
 #include <mpi.h>
 
-//#define WIN32_LEAN_AND_MEAN
-//#include <Windows.h>
-
 #include <chrono>
 #include <thread>
 #include <random>
+#include <sstream>
+#include <string>
 #include <vector>
 
+#include "PlatformDependent.h"
+#include "ExceptionInfo.h"
 #include "nodeMessages.h"
 #include "Node.h"
 
@@ -19,35 +20,57 @@ void NotifyRootOfMsg(NodeToNodeMsgTypes::NodeToNodeMsgType msgType, int otherNod
 
 int mpiRank, mpiSize, rootRank;
 
-/*int YourReportHook(int reportType, char *message, int *returnValue)
+void CreateDummyStorageDaemon(int mpiRank, ofstream& fp, bool debug = false)
 {
-	std::string str = message;
-	int			lineNum = -5;
-	bool		before = false;
-	
-	MPI_Send((void*)str.c_str(), str.length(), MPI_CHAR, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
-	MPI_Send((void*)&lineNum, 1, MPI_INT, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
-	MPI_Send((void*)&before, sizeof(bool), MPI_CHAR, rootRank, NodeToRootMessageTags::VECTOR_OPERATION, MPI_COMM_WORLD);
+	static bool hasRun = false;
 
-	return 0;
-}*/
+	if (hasRun) {
+		return;
+	}
+
+#ifdef _WIN32
+	const char* procPath = "\"..\\Debug\\DummyStorageDaemon.exe\"";
+#else
+	const char* procPath = "\"..\\Debug\\DummyStorageDaemon\"";
+#endif
+
+	stringstream ss;
+	ss << procPath << " " << mpiRank;
+
+	if (debug) {
+		ss << " -d";
+	}
+
+	string cmdLine = ss.str();
+
+	fp << "\tCmdline: " << cmdLine << endl;
+	fp.flush();
+
+	RunProc(procPath, cmdLine.c_str(), fp);
+
+	fp.flush();
+
+	hasRun = true;
+}
 
 int main(int argc, char* argv[])
 {
-	bool alive = false;
+	bool alive = false, debug = false;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 	MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
 
 	if (argc > 1 && strcmp(argv[1], "-d") == 0) {
-		/*while (!IsDebuggerPresent()) {
+		while (!BeingDebugged()) {
 			this_thread::sleep_for(chrono::milliseconds(200));
-		}*/
+		}
+
+		debug = true;
 	}
 
-	InitMPITypes();
+	SetExceptionHooks(rootRank);
 
-	//_CrtSetReportHook(YourReportHook);
+	InitMPITypes();
 
 	MPI_Status	mpiStatus;
 	MPI_Recv((void*)&rootRank, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &mpiStatus);
@@ -114,6 +137,9 @@ int main(int argc, char* argv[])
 					fp.flush();
 
 					dhtArea.SendOverMPI(rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE);
+
+					fp << node.LogOutputHeader() << "Launching storage daemon" << endl;
+					CreateDummyStorageDaemon(mpiRank, fp, debug);
 				} else {
 					alive = false;
 					continue;
@@ -309,8 +335,6 @@ int main(int argc, char* argv[])
 				fp << endl << "\tUpdated root with new DHT area." << endl;
 				dhtArea.SendOverMPI(rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE);
 
-				//MPI_Ssend((void*)&dhtArea, 1, InterNodeMessage::MPI_DHTRegion, rootRank, NodeToRootMessageTags::DHT_AREA_UPDATE, MPI_COMM_WORLD);
-
 				newMsg = 0;
 				MPI_Iprobe(MPI_ANY_SOURCE, InterNodeMessageTags::REQUEST_DHT_AREA, MPI_COMM_WORLD, &newMsg, &mpiStatus);
 			}
@@ -355,7 +379,7 @@ int main(int argc, char* argv[])
 			}
 
 			// update neighbors if needed
-			node.UpdateNeighbors();
+			node.Update();
 
 			/*
 			int rankToSend = rand() % mpiSize;

@@ -1,6 +1,11 @@
 \chapter{Design Rationale}
 	There are many reasons why we would make our system dual layer.  It makes sense that we have one layer for the client and another for the server box that each user has.  This allows alot of the systems activities to be transparent to the user, because they are happening on the external hardware and not on the user's own PC.  For example, all of the storage space is contained on this external box, as well as most of the distributed sending and receiving.
 
+
+	As described previously, using the architecture of a P2P server network has many benefits.  The geograhic distribution and self-healing network allows for both enhanced reliability and improved accesibility.  Even if one or more servers is destroyed or has an outage, the data will be replicated in other places and can still be retrieved by users.
+
 	Using OpenSSH to communicate between client and server allows the data transfers to be secure, and any listeners on the network should not be able to intercept anything.  The only vulnerable point is when the initial connection is made between the client and the server; however, through secure handshaking spoofing should be avoided.
+
+	We implemented our configuration interface as a web page for many reasons.  First of all, a web page allows the interface to be cross-platform.  Therefore, it doesn't matter whether the client system uses Linux, Windows, or Mac OSX; as long as it can run a web browser it can access the configuration interface.  Furthermore, using a webpage hosted on the server is easier because it means that there is not a seperate client application we have to also maintain and update.  Everything is contained on the server box.
 
 	We will use MongoDB because it encapsulates and abstracts many common database functions for us, instead of requiring us to develop them ourselves.  It is well known and has been proven to function at a high performance level, with a good storage efficiency.

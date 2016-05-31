@@ -4,8 +4,11 @@
 #include <limits>
 #include <algorithm>
 #include <vector>
+#include <cmath>
 
 #include <mpi.h>
+
+#include <fstream>
 
 using namespace std;
 
@@ -91,19 +94,20 @@ bool DHTArea::AddRegion(const DHTRegion& region)
 	return true;
 }
 
+bool CompareDHTRegions(const DHTRegion& a, const DHTRegion& b)
+{
+  float areaOfA = (a.right - a.left) * (a.bottom - a.top);
+  float areaOfB = (b.right - b.left) * (b.bottom - b.top);
+  return areaOfA < areaOfB;
+}
+
 DHTArea	DHTArea::SplitRegion(int splitAxis)
 {
 	DHTArea			newDHTArea;
 	DHTRegion	newDHTRegion;
 
 	// sort the DHT regions in ascending order of their total area
-	sort(m_vDHTRegions.begin(), m_vDHTRegions.end(),
-		[](const DHTRegion& a, const DHTRegion& b) -> bool
-	{
-		float areaOfA = (a.right - a.left) * (a.bottom - a.top);
-		float areaOfB = (b.right - b.left) * (b.bottom - b.top);
-		return areaOfA < areaOfB;
-	});
+	sort(m_vDHTRegions.begin(), m_vDHTRegions.end(), CompareDHTRegions);
 
 	DHTRegion&	regionToSplit = *m_vDHTRegions.begin();
 
@@ -268,13 +272,17 @@ bool DHTArea::operator!=(const DHTArea& a) const
 	return !(a == *(const DHTArea*)this);
 }
 
-bool DHTArea::SendOverMPI(int rank, int tag) const
+bool DHTArea::SendOverMPI(int rank, int tag, ofstream& fp) const
 {
+	fp << "Sending DHT area to " << rank << " with tag " << tag << endl;
 	int numRegions = m_vDHTRegions.size();
-	MPI_Send((void*)&numRegions, 1, MPI_INT, rank, tag, MPI_COMM_WORLD);
+	fp << "\t# Regions: " << numRegions << endl;
+	int err = MPI_Send((void*)&numRegions, 1, MPI_INT, rank, tag, MPI_COMM_WORLD);
+	fp << "\tSent # regions w/ return: " << err << endl;
 
-	if(numRegions > 0) {
-		MPI_Send((void*)&m_vDHTRegions[0], m_vDHTRegions.size(), InterNodeMessage::MPI_DHTRegion, rank, tag, MPI_COMM_WORLD);
+	if(numRegions > 0) {  
+		err = MPI_Send((void*)&m_vDHTRegions[0], m_vDHTRegions.size(), InterNodeMessage::MPI_DHTRegion, rank, tag, MPI_COMM_WORLD);
+		fp << "\tSent region array w/ return: " << err << endl;
 	}
 
 	return true;

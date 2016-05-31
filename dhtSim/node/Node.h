@@ -2,7 +2,19 @@
 #define __NODE_H__
 
 #include <vector>
-#include <random>
+
+//#ifdef __GNUC__
+#include <tr1/random>
+#define randns std::tr1
+
+typedef randns::mt19937 generator_t;
+typedef randns::uniform_real<float> distribution_t;
+typedef randns::variate_generator<generator_t, distribution_t> variate_t;
+//#else
+//#include <random>
+//#define randns std
+//#endif
+
 #include <fstream>
 #include <string>
 
@@ -45,7 +57,7 @@ public:
 
 	std::string		LogOutputHeader() const;
 
-	static bool		SendNeighborsOverMPI(const std::vector<NodeNeighbor>& neighbors, int rank, int tag);
+	static bool		SendNeighborsOverMPI(const std::vector<NodeNeighbor>& neighbors, int rank, int tag, std::ofstream& fp);
 	static bool		RecvNeighborsOverMPI(std::vector<NodeNeighbor>& neighbors, int rank, int tag);
 
 private:
@@ -61,8 +73,9 @@ private:
 	DHTArea															m_dhtArea;
 	std::vector<std::chrono::high_resolution_clock::time_point>		m_neighborTimeSinceLastUpdate;
 	std::chrono::high_resolution_clock::time_point					m_timeOfLastNeighborUpdate;
-	std::mt19937													m_randGenerator;
-	std::uniform_real_distribution<float>							m_randomAreaCoordGenerator;
+	generator_t													m_randGenerator;
+	distribution_t							m_randomAreaCoordGenerator;
+	variate_t							m_randVariate;
 	int																m_nextSplitAxis;
 
 	int																m_mpiRank;

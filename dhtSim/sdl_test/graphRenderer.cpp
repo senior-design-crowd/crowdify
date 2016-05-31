@@ -1,5 +1,5 @@
-#include <graphviz\cgraph.h>
-#include <graphviz\gvc.h>
+#include <graphviz/cgraph.h>
+#include <graphviz/gvc.h>
 #include <SDL.h>
 
 #include <string>
@@ -16,13 +16,6 @@ using namespace std;
 string GenerateGraph(const vector<NodeState>& nodeStates, const vector<set<int>>& nodeEdges, SDLEngine* engine, int windowIndex)
 {
 	const Window& window = engine->GetWindow(windowIndex);
-
-	string attributes[] = {
-		" [fillcolor=white]",
-		" [fillcolor=green]",
-		" [fillcolor=red]",
-		" [fillcolor=yellow]"
-	};
 
 	stringstream ss;
 

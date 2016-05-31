@@ -124,8 +124,8 @@ int main(int argc, char* argv[])
 
 		int nodeChangingStage = 0;
 
-		default_random_engine randGenerator((unsigned int)chrono::system_clock::now().time_since_epoch().count());
-		uniform_int_distribution<int> randomNodeGenerator(0, numNetworkNodes - 1);
+		mt19937 randGenerator((unsigned int)chrono::system_clock::now().time_since_epoch().count());
+		uniform_int<int> randomNodeGenerator(0, numNetworkNodes - 1);
 
 		// the main event loop
 		while (!quit) {
@@ -233,6 +233,9 @@ int main(int argc, char* argv[])
 			// check if any new messages have been received
 
 			int probeFlag;
+			MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &probeFlag, &mpiStatus);
+			
+			
 
 			// update the node DHT areas
 			//while (probeFlag) {
@@ -246,8 +249,6 @@ int main(int argc, char* argv[])
 
 					fp << "Got DHT_AREA_UPDATE from " << mpiStatus.MPI_SOURCE << ":" << endl
 						<< newArea << endl;
-
-					const vector<DHTRegion>& regions = newArea.GetRegions();
 
 					int src = mpiStatus.MPI_SOURCE;
 					dhtAreas[src] = newArea;

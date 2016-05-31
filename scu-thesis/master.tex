@@ -7,6 +7,7 @@
 
 
 \usepackage[nottoc,numbib]{tocbibind}
+\usepackage[toc,page]{appendix}
 
 \usepackage[letterpaper, portrait, margin=1in]
 {geometry}
@@ -58,8 +59,6 @@ rmargin = 1.25in,
 \include{designrationale}
 \include{storage-implementation}
 \include{testingplan}
-\include{riskanalysis}
-\include{timeline}
 \include{societalconcerns}
 \include{conclusion}
 
@@ -130,6 +129,12 @@ Von Eicken, T., 'Amazon EC2 Outage: Summary and Lessons Learned', Rightscale.com
 
 
 \end{thebibliography}
+
+\begin{appendices}
+\include{conceptual}
+\include{riskanalysis}
+\include{timeline}
+\end{appendices}
 
 \backmatter
 \end{document}

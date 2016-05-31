@@ -1,43 +1,46 @@
 \chapter {Requirements}
 
-We determined our requirements by consulting with Dr. Amer, our advisor who also acted as our customer.  All requirements are listed in order of importance for each section.  The ''Functional Requirements'' define what the system should do, e.g. what actions it should enable and what services it should provide.  The ''Non-Functional Requirements'' define how the system should work and behave.  Often, non-functional requirements are qualitative attributes of the system.  The ''Design Constraints'' describe the real world limitations that our system needs to abide by.  Design constraints are very similar to non-functional requirements; however, while non-functional requirements are written in terms of the problem, design constraints are written in terms of the solution.
+We determined our requirements by consulting with Dr. Amer, our advisor, who also acted as our customer.  All requirements are listed in order of importance for each section.  The ''Functional Requirements'' define what the system should do e.g. what actions it should enable and what services it should provide.  The ''Non-Functional Requirements'' define how the system should work and behave.  Often, non-functional requirements are qualitative attributes of the system.  The ''Design Constraints'' describe the real world limitations that our system needs to abide by.  Design constraints are very similar to non-functional requirements; however, where non-functional requirements are written in terms of the problem, design constraints are written in terms of the solution.
 
 \section {Functional Requirements}
+	The system must...
 
 	\begin{itemize}
-		\item The system must regularly and automatically create copies of a user's data and store the copies elsewhere for the purpose of backup.
+		\item regularly and automatically create copies of a user's data and store the copies elsewhere for the purpose of backup.
 
-		\item The system shall write stored files to a location on a user indicated machine in the structure which they were originally stored.
+		\item write stored files to a location on a user indicated machine in the structure which they were originally stored.
 
-		\item The system must, when prompted, restore that data from elsewhere back onto the computer.
+		\item restore that data from elsewhere back onto the computer when prompted.
 
-		\item The system will have an interface for managing backup settings, such as choosing which files are backed up and how often the backup occurs.
+		\item have an interface for managing backup settings, such as choosing which files are backed up and how often the backup occurs.
 
-		\item The system will only allow authenticated users to access its services.
+		\item only allow authenticated users to access its services.
 
-		\item The system shall alert the user when storage errors occur.
+		\item alert the user when storage errors occur.
 
 	\end{itemize}
 
 \section {Non-Functional Requirements}
+	The system must...
+
 	\begin{itemize}
-		\item The system must avoid data loss.
+		\item avoid data loss.
 
-		\item The system must allow data to be accessed at any time.
+		\item allow data to be accessed at any time.
 
-		\item The system will have a clear setup procedure.
+		\item have a clear setup procedure.
 		
-		\item The system will have a clear backup procedure.
+		\item have a clear backup procedure.
 		
-		\item The system shall report errors clearly.
+		\item report errors clearly.
 
-		\item The system will securely store data, preventing access from unauthorized parties and maintaining privacy.
+		\item securely store data, preventing access from unauthorized parties and maintaining privacy.
 
-		\item The system will widely distribute data to prevent a single point of attack by unauthorized parties.
+		\item widely distribute data to prevent a single point of attack by unauthorized parties.
 
-		\item The system will have a user-friendly interface, hiding most of the complexity of data distribution from the user.
+		\item have a user-friendly interface, hiding most of the complexity of data distribution from the user.
 
-		\item The system will run transparently to the user, without noticeable performance reduction for the computer.
+		\item run transparently to the user, without noticeable performance reduction for the computer.
 	\end{itemize}
 
 \section {Design Constraints}

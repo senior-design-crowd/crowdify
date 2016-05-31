@@ -1,4 +1,6 @@
 First add your sections
 Then add pfeiffer's changes
+	make appendix
 Then make random changes
 	The meme
+	implementation of raspberry pies

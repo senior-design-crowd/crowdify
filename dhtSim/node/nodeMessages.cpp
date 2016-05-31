@@ -1,3 +1,4 @@
+#include <mpi.h>
 #include "nodeMessages.h"
 
 namespace NodeToRootMessage {

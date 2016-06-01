@@ -1,5 +1,9 @@
 \chapter{Conclusion}
 \section{Lessons Learned}
 
+One of the big challenges we faced in this project was debugging a large and complicated multi-threaded system.
+To correctly test and develop the system, we had to simulate the whole network of backup servers interacting with one another.
+Typically this involved the simulation of at least 10 different backup servers at once. But with each backup server involving multiple
+separate modules and also running a diagnostics tool to display the current state of the network, the simulation became as complex as having 21 separate modules running simultaneously and communicating with one another. This is a complicated system to understand at any point in time. It is a similar situation to having 21 people talking to each other at once and attempting to comprehend what the overall conversation is.
 
 Another challenge we had to learn to overcome was poor documentation in the third-party libraries we used.  In the course of this project, we had to use many libraries in multiple operating system environments.  Many of these libraries were openly sourced and developed by third-parties.  For example, we used IgniteUI for the design of the web interface, WolfSSL for the secure handshake in the discovery procedure, and OpenSSH for the file transfer.  Unfortunately, most of these libraries had poor documentation, providing very little description as to their usage, and sometimes even giving contradicting information.  The lesson we learned from this challenge was to take into account the difficulty in diciphering the usage of third-party libraries when deciding whether or not to use them.  Furthermore, we learned techniques for deducing the usage of libraries.  For example, some libraries had similar function patterns as common libraries we had all encountered before, allowing us to infer the proper usage.
